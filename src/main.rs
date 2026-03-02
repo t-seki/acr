@@ -137,7 +137,29 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
         Command::Test => {
-            todo!("acrs test")
+            let ctx = workspace::detect_problem_dir()?;
+            let test_cases = workspace::testcase::load(&ctx.problem_dir)?;
+
+            if test_cases.is_empty() {
+                println!("No test cases found.");
+                return Ok(());
+            }
+
+            let results = runner::tester::run_all(&ctx.problem_dir, &test_cases).await?;
+            runner::tester::display_results(&results);
+
+            let passed = results
+                .iter()
+                .filter(|(_, r)| matches!(r, runner::TestResult::Ac))
+                .count();
+            if passed < results.len() {
+                return Err(error::AcrsError::TestFailed {
+                    passed,
+                    total: results.len(),
+                }
+                .into());
+            }
+            Ok(())
         }
         Command::Submit => {
             todo!("acrs submit")
