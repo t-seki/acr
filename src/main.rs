@@ -162,7 +162,59 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
         Command::Submit => {
-            todo!("acrs submit")
+            let ctx = workspace::detect_problem_dir()?;
+            let test_cases = workspace::testcase::load(&ctx.problem_dir)?;
+
+            // Run tests first
+            if !test_cases.is_empty() {
+                let results = runner::tester::run_all(&ctx.problem_dir, &test_cases).await?;
+                runner::tester::display_results(&results);
+
+                let passed = results
+                    .iter()
+                    .filter(|(_, r)| matches!(r, runner::TestResult::Ac))
+                    .count();
+                if passed < results.len() {
+                    return Err(error::AcrsError::TestFailed {
+                        passed,
+                        total: results.len(),
+                    }
+                    .into());
+                }
+            }
+
+            // Read source code
+            let source = std::fs::read_to_string(ctx.problem_dir.join("src/main.rs"))?;
+
+            // Submit
+            let session = config::session::load()?;
+            let client = AtCoderClient::with_session(&session.revel_session)?;
+
+            println!("\nSubmitting...");
+            client
+                .submit(&ctx.contest_id, &ctx.task_screen_name, &source)
+                .await?;
+
+            // Poll result
+            let spinner = indicatif::ProgressBar::new_spinner();
+            spinner.set_message("Judging...");
+            spinner.enable_steady_tick(std::time::Duration::from_millis(100));
+
+            let result = client.poll_result(&ctx.contest_id).await?;
+            spinner.finish_and_clear();
+
+            println!("Result: {}", result.status);
+            println!("URL: {}", result.submission_url);
+
+            // Open browser
+            let browser = config::global::load()
+                .map(|c| c.browser)
+                .unwrap_or_else(|_| "xdg-open".to_string());
+            let _ = std::process::Command::new(&browser)
+                .arg(&result.submission_url)
+                .spawn();
+
+            Ok(())
         }
         Command::Config { key: _, value: _ } => {
             todo!("acrs config")
