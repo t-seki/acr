@@ -15,7 +15,44 @@ async fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Command::Init => {
-            todo!("acrs init")
+            let config_dir = config::config_dir()?;
+            std::fs::create_dir_all(&config_dir)?;
+
+            // config.toml
+            let config_path = config_dir.join("config.toml");
+            if config_path.exists() {
+                println!("config.toml already exists, skipping.");
+            } else {
+                print!("Editor [vim]: ");
+                std::io::Write::flush(&mut std::io::stdout())?;
+                let mut editor = String::new();
+                std::io::stdin().read_line(&mut editor)?;
+                let editor = editor.trim();
+                let editor = if editor.is_empty() {
+                    "vim".to_string()
+                } else {
+                    editor.to_string()
+                };
+
+                let cfg = config::global::GlobalConfig {
+                    editor,
+                    browser: "xdg-open".to_string(),
+                };
+                config::global::save(&cfg)?;
+                println!("Created config.toml");
+            }
+
+            // template.rs
+            let template_path = config::global::template_path()?;
+            if template_path.exists() {
+                println!("template.rs already exists, skipping.");
+            } else {
+                std::fs::write(&template_path, config::global::default_template())?;
+                println!("Created template.rs");
+            }
+
+            println!("Initialization complete!");
+            Ok(())
         }
         Command::Login => {
             print!("Username: ");
@@ -216,8 +253,36 @@ async fn main() -> anyhow::Result<()> {
 
             Ok(())
         }
-        Command::Config { key: _, value: _ } => {
-            todo!("acrs config")
+        Command::Config { key, value } => {
+            match (key, value) {
+                (None, None) => {
+                    let cfg = config::global::load()?;
+                    println!("editor = {}", cfg.editor);
+                    println!("browser = {}", cfg.browser);
+                    Ok(())
+                }
+                (Some(key), None) => {
+                    let cfg = config::global::load()?;
+                    match key.as_str() {
+                        "editor" => println!("{}", cfg.editor),
+                        "browser" => println!("{}", cfg.browser),
+                        _ => eprintln!("Unknown config key: {}", key),
+                    }
+                    Ok(())
+                }
+                (Some(key), Some(value)) => {
+                    let mut cfg = config::global::load()?;
+                    match key.as_str() {
+                        "editor" => cfg.editor = value,
+                        "browser" => cfg.browser = value,
+                        _ => anyhow::bail!("Unknown config key: {}", key),
+                    }
+                    config::global::save(&cfg)?;
+                    println!("Updated {}.", key);
+                    Ok(())
+                }
+                (None, Some(_)) => unreachable!(),
+            }
         }
     }
 }
