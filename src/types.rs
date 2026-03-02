@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-/// コンテスト情報（問題一���付き）
+/// コンテスト情報（問題一覧付き）
 #[derive(Debug, Clone)]
 pub struct ContestInfo {
     pub contest_id: String,
@@ -12,9 +12,9 @@ pub struct ContestInfo {
 pub struct Problem {
     /// "A", "B", ...
     pub alphabet: String,
-    /// 問題��
+    /// 問題名
     pub name: String,
-    /// "abc001_a" ��式
+    /// "abc001_a" 形式
     pub task_screen_name: String,
     /// 問題ページURL
     pub url: String,
@@ -28,7 +28,7 @@ pub struct TestCase {
     pub expected: String,
 }
 
-/// テスト��行結果
+/// テスト実行結果
 #[derive(Debug)]
 pub enum TestResult {
     Ac,

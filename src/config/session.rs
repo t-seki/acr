@@ -29,16 +29,16 @@ impl Session {
         let content =
             serde_json::to_string_pretty(self).context("セッションのシリアライズに失敗")?;
         std::fs::write(&path, content)
-            .with_context(|| format!("セ��ションファイルの書き込みに失敗: {}", path.display()))?;
+            .with_context(|| format!("セッションファイルの書き込みに失敗: {}", path.display()))?;
         Ok(())
     }
 
-    /// セッションファイルを削��する。
+    /// セッションファイルを削除する。
     pub fn delete() -> Result<()> {
         let path = config_dir()?.join("session.json");
         if path.exists() {
             std::fs::remove_file(&path).with_context(|| {
-                format!("セッションファ��ルの削除に失敗: {}", path.display())
+                format!("セッションファイルの削除に失敗: {}", path.display())
             })?;
         }
         Ok(())
