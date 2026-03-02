@@ -29,3 +29,4 @@ indicatif = "0.17"
 
 # utility
 dirs = "5"
+rpassword = "5"

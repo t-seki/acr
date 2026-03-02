@@ -18,13 +18,28 @@ async fn main() -> anyhow::Result<()> {
             todo!("acrs init")
         }
         Command::Login => {
-            todo!("acrs login")
+            use std::io::{self, Write};
+            print!("Username: ");
+            io::stdout().flush()?;
+            let mut username = String::new();
+            io::stdin().read_line(&mut username)?;
+            let username = username.trim();
+            print!("Password: ");
+            io::stdout().flush()?;
+            let password = rpassword::read_password()?;
+            atcoder::auth::login(username, &password).await?;
+            println!("ログインに成功しました。");
         }
         Command::Logout => {
-            todo!("acrs logout")
+            atcoder::auth::logout()?;
+            println!("ログアウトしました。");
         }
         Command::Session => {
-            todo!("acrs session")
+            if atcoder::auth::check_session().await? {
+                println!("ログイン済みです。");
+            } else {
+                println!("ログインしていません。");
+            }
         }
         Command::New { contest_id } => {
             todo!("acrs new {}", contest_id)
@@ -38,8 +53,10 @@ async fn main() -> anyhow::Result<()> {
         Command::Submit => {
             todo!("acrs submit")
         }
-        Command::Config { key, value } => {
+        Command::Config { key: _, value: _ } => {
             todo!("acrs config")
         }
     }
+
+    Ok(())
 }
