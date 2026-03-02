@@ -5,6 +5,7 @@ mod error;
 mod runner;
 mod workspace;
 
+use atcoder::AtCoderClient;
 use clap::Parser;
 use cli::{Cli, Command};
 
@@ -17,13 +18,35 @@ async fn main() -> anyhow::Result<()> {
             todo!("acrs init")
         }
         Command::Login => {
-            todo!("acrs login")
+            print!("Username: ");
+            let mut username = String::new();
+            std::io::Write::flush(&mut std::io::stdout())?;
+            std::io::stdin().read_line(&mut username)?;
+            let username = username.trim();
+
+            eprint!("Password: ");
+            let password = rpassword::read_password()?;
+
+            let client = AtCoderClient::new()?;
+            let revel_session = client.login(username, &password).await?;
+
+            config::session::save(&config::session::SessionConfig { revel_session })?;
+            println!("Logged in as {}.", username);
+            Ok(())
         }
         Command::Logout => {
-            todo!("acrs logout")
+            config::session::delete()?;
+            println!("Logged out.");
+            Ok(())
         }
         Command::Session => {
-            todo!("acrs session")
+            let session = config::session::load()?;
+            let client = AtCoderClient::with_session(&session.revel_session)?;
+            match client.check_session().await? {
+                Some(username) => println!("Logged in as {}.", username),
+                None => println!("Session expired. Run `acrs login` again."),
+            }
+            Ok(())
         }
         Command::New { contest_id } => {
             todo!("acrs new {}", contest_id)
@@ -37,7 +60,7 @@ async fn main() -> anyhow::Result<()> {
         Command::Submit => {
             todo!("acrs submit")
         }
-        Command::Config { key, value } => {
+        Command::Config { key: _, value: _ } => {
             todo!("acrs config")
         }
     }
