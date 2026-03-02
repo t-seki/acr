@@ -1,0 +1,31 @@
+[package]
+name = "acrs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# HTTP + scraping
+reqwest = { version = "0.12", features = ["cookies", "json"] }
+scraper = "0.20"
+
+# async
+tokio = { version = "1", features = ["full"] }
+
+# serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+# error handling
+anyhow = "1"
+thiserror = "2"
+
+# terminal
+colored = "2"
+indicatif = "0.17"
+
+# utility
+dirs = "5"

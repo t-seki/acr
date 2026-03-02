@@ -186,24 +186,24 @@ acrs/
     ├── main.rs               # エントリーポイント
     ├── cli.rs                # clap によるコマンド定義
     │
+    ├── atcoder.rs            # AtCoderClient 本体
     ├── atcoder/
-    │   ├── mod.rs            # AtCoderClient 本体
     │   ├── auth.rs           # ログイン・セッション管理
     │   ├── contest.rs        # 問題一覧取得（standings/json）
     │   ├── submit.rs         # 提出・結果確認
     │   └── scraper.rs        # HTML解析ユーティリティ
     │
+    ├── workspace.rs
     ├── workspace/
-    │   ├── mod.rs
     │   ├── generator.rs      # ディレクトリ・Cargo.toml生成
     │   └── testcase.rs       # テストケース保存・読み込み
     │
+    ├── runner.rs
     ├── runner/
-    │   ├── mod.rs
     │   └── tester.rs         # ビルド・テスト実行・結果表示
     │
+    ├── config.rs
     ├── config/
-    │   ├── mod.rs
     │   ├── global.rs         # ~/.config/acrs/config.toml
     │   └── session.rs        # ~/.config/acrs/session.json
     │
