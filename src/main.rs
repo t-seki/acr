@@ -3,6 +3,7 @@ mod cli;
 mod config;
 mod error;
 mod runner;
+mod types;
 mod workspace;
 
 use clap::Parser;
