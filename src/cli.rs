@@ -33,6 +33,17 @@ pub enum Command {
         problem: String,
     },
 
+    /// Open problem page in browser
+    ///
+    /// From a problem directory: opens the problem page.
+    ///
+    /// From a contest directory: opens the task list,
+    /// or a specific problem with PROBLEM arg.
+    View {
+        /// Problem identifier (e.g. a, b, c)
+        problem: Option<String>,
+    },
+
     /// Run tests for the current problem
     Test,
 
