@@ -16,10 +16,29 @@ pub fn extract_csrf_token(html: &str) -> anyhow::Result<String> {
 }
 
 /// Extract sample input/output pairs from a problem page.
-/// Looks for <pre> elements inside #task-statement, pairing consecutive input/output.
+/// Targets the English section first, falls back to Japanese if not found.
 pub fn extract_sample_cases(html: &str) -> anyhow::Result<Vec<(String, String)>> {
     let document = Html::parse_document(html);
-    let section_selector = Selector::parse("#task-statement .part").expect("valid selector");
+
+    // Try English section first, then Japanese, then whole task-statement
+    let lang_selectors = [
+        "#task-statement .lang-en .part",
+        "#task-statement .lang-ja .part",
+        "#task-statement .part",
+    ];
+
+    for lang_sel in &lang_selectors {
+        let pairs = extract_samples_from(&document, lang_sel);
+        if !pairs.is_empty() {
+            return Ok(pairs);
+        }
+    }
+
+    Err(AcrsError::ScrapingFailed("No sample cases found".to_string()).into())
+}
+
+fn extract_samples_from(document: &Html, section_css: &str) -> Vec<(String, String)> {
+    let section_selector = Selector::parse(section_css).expect("valid selector");
     let pre_selector = Selector::parse("pre").expect("valid selector");
     let h3_selector = Selector::parse("h3").expect("valid selector");
 
@@ -43,18 +62,7 @@ pub fn extract_sample_cases(html: &str) -> anyhow::Result<Vec<(String, String)>>
         }
     }
 
-    let pairs: Vec<(String, String)> = inputs
-        .into_iter()
-        .zip(outputs)
-        .collect();
-
-    if pairs.is_empty() {
-        return Err(
-            AcrsError::ScrapingFailed("No sample cases found".to_string()).into(),
-        );
-    }
-
-    Ok(pairs)
+    inputs.into_iter().zip(outputs).collect()
 }
 
 /// Extract Rust language_id from the submit page HTML.
