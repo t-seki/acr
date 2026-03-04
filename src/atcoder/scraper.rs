@@ -35,9 +35,9 @@ pub fn extract_sample_cases(html: &str) -> anyhow::Result<Vec<(String, String)>>
 
         if let Some(pre) = section.select(&pre_selector).next() {
             let text = pre.text().collect::<String>();
-            if h3_text.contains("Input") || h3_text.contains("入力") {
+            if h3_text.contains("Sample Input") || h3_text.contains("入力例") {
                 inputs.push(text);
-            } else if h3_text.contains("Output") || h3_text.contains("出力") {
+            } else if h3_text.contains("Sample Output") || h3_text.contains("出力例") {
                 outputs.push(text);
             }
         }
@@ -216,6 +216,67 @@ mod tests {
         assert_eq!(cases[0].1, "8\n");
         assert_eq!(cases[1].0, "10 20\n");
         assert_eq!(cases[1].1, "30\n");
+    }
+
+    #[test]
+    fn test_extract_sample_cases_ignores_format_description() {
+        // Reproduces real AtCoder HTML where "入力" (Input format) section
+        // contains <var> tags like N M, which should NOT be treated as samples.
+        let html = r#"<html><body>
+            <div id="task-statement">
+                <span class="lang-ja">
+                    <div class="io-style">
+                        <div class="part">
+                            <section>
+                                <h3>入力</h3>
+                                <pre><var>N</var> <var>M</var>
+</pre>
+                            </section>
+                        </div>
+                        <div class="part">
+                            <section>
+                                <h3>出力</h3>
+                                <pre>Yes or No</pre>
+                            </section>
+                        </div>
+                    </div>
+                    <div class="part">
+                        <section>
+                            <h3>入力例 1</h3>
+                            <pre>6 3
+</pre>
+                        </section>
+                    </div>
+                    <div class="part">
+                        <section>
+                            <h3>出力例 1</h3>
+                            <pre>Yes
+</pre>
+                        </section>
+                    </div>
+                    <div class="part">
+                        <section>
+                            <h3>入力例 2</h3>
+                            <pre>4 3
+</pre>
+                        </section>
+                    </div>
+                    <div class="part">
+                        <section>
+                            <h3>出力例 2</h3>
+                            <pre>No
+</pre>
+                        </section>
+                    </div>
+                </span>
+            </div>
+        </body></html>"#;
+        let cases = extract_sample_cases(html).unwrap();
+        assert_eq!(cases.len(), 2);
+        assert_eq!(cases[0].0, "6 3\n");
+        assert_eq!(cases[0].1, "Yes\n");
+        assert_eq!(cases[1].0, "4 3\n");
+        assert_eq!(cases[1].1, "No\n");
     }
 
     #[test]
