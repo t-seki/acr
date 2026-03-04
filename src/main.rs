@@ -51,6 +51,17 @@ async fn main() -> anyhow::Result<()> {
                 println!("Created template.rs");
             }
 
+            // .cargo/config.toml (shared target directory)
+            let cargo_config_dir = std::env::current_dir()?.join(".cargo");
+            let cargo_config_path = cargo_config_dir.join("config.toml");
+            if cargo_config_path.exists() {
+                println!(".cargo/config.toml already exists, skipping.");
+            } else {
+                std::fs::create_dir_all(&cargo_config_dir)?;
+                std::fs::write(&cargo_config_path, "[build]\ntarget-dir = \"target\"\n")?;
+                println!("Created .cargo/config.toml");
+            }
+
             println!("Initialization complete!");
             Ok(())
         }
