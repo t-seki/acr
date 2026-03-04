@@ -136,7 +136,9 @@ pub fn extract_username(html: &str) -> Option<String> {
     document
         .select(&selector)
         .next()
-        .map(|el| el.text().collect::<String>().trim().to_string())
+        .and_then(|el| el.value().attr("href"))
+        .and_then(|href| href.strip_prefix("/users/"))
+        .map(|s| s.to_string())
 }
 
 #[cfg(test)]
@@ -164,7 +166,7 @@ mod tests {
     fn test_extract_username_logged_in() {
         let html = r#"<html><body>
             <ul>
-                <li><a href="/users/testuser">testuser</a></li>
+                <li><a href="/users/testuser">My Profile</a></li>
             </ul>
         </body></html>"#;
         assert_eq!(extract_username(html), Some("testuser".to_string()));

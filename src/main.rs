@@ -62,6 +62,9 @@ async fn main() -> anyhow::Result<()> {
                 .unwrap_or_else(|_| "xdg-open".to_string());
             let _ = std::process::Command::new(&browser)
                 .arg(login_url)
+                .stdin(std::process::Stdio::null())
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
                 .spawn();
 
             println!("Opening AtCoder login page in your browser...");
