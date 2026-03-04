@@ -55,20 +55,51 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
         Command::Login => {
-            print!("Username: ");
-            let mut username = String::new();
+            // Open AtCoder login page in browser
+            let login_url = "https://atcoder.jp/login";
+            let browser = config::global::load()
+                .map(|c| c.browser)
+                .unwrap_or_else(|_| "xdg-open".to_string());
+            let _ = std::process::Command::new(&browser)
+                .arg(login_url)
+                .stdin(std::process::Stdio::null())
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .spawn();
+
+            println!("Opening AtCoder login page in your browser...");
+            println!();
+            println!("After logging in, please copy the REVEL_SESSION cookie value:");
+            println!("  1. Open DevTools (F12)");
+            println!("  2. Go to Application tab > Cookies > https://atcoder.jp");
+            println!("  3. Find REVEL_SESSION and copy its value");
+            println!();
+
+            // Read REVEL_SESSION from stdin
+            print!("REVEL_SESSION: ");
             std::io::Write::flush(&mut std::io::stdout())?;
-            std::io::stdin().read_line(&mut username)?;
-            let username = username.trim();
+            let mut revel_session = String::new();
+            std::io::stdin().read_line(&mut revel_session)?;
+            let revel_session = revel_session.trim().to_string();
 
-            eprint!("Password: ");
-            let password = rpassword::read_password()?;
+            if revel_session.is_empty() {
+                anyhow::bail!("REVEL_SESSION cannot be empty.");
+            }
 
-            let client = AtCoderClient::new()?;
-            let revel_session = client.login(username, &password).await?;
-
-            config::session::save(&config::session::SessionConfig { revel_session })?;
-            println!("Logged in as {}.", username);
+            // Validate session
+            println!("Validating session...");
+            let client = AtCoderClient::with_session(&revel_session)?;
+            match client.check_session().await? {
+                Some(username) => {
+                    config::session::save(&config::session::SessionConfig { revel_session })?;
+                    println!("Logged in as {}.", username);
+                }
+                None => {
+                    anyhow::bail!(
+                        "Invalid or expired session. Please make sure you are logged in to AtCoder and copied the correct REVEL_SESSION value."
+                    );
+                }
+            }
             Ok(())
         }
         Command::Logout => {

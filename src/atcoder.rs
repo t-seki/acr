@@ -3,8 +3,10 @@ pub mod contest;
 pub mod scraper;
 pub mod submit;
 
+use std::sync::Arc;
+
 use anyhow::Context;
-use reqwest::header::{HeaderMap, HeaderValue, COOKIE};
+use reqwest::cookie::Jar;
 
 pub const BASE_URL: &str = "https://atcoder.jp";
 
@@ -45,15 +47,13 @@ impl AtCoderClient {
 
     /// Create a client with an existing REVEL_SESSION cookie
     pub fn with_session(revel_session: &str) -> anyhow::Result<Self> {
-        let mut headers = HeaderMap::new();
-        let cookie_value = format!("REVEL_SESSION={}", revel_session);
-        headers.insert(
-            COOKIE,
-            HeaderValue::from_str(&cookie_value).context("Invalid session value")?,
-        );
+        let jar = Jar::default();
+        let cookie = format!("REVEL_SESSION={}", revel_session);
+        let url = BASE_URL.parse().context("Failed to parse base URL")?;
+        jar.add_cookie_str(&cookie, &url);
+
         let client = reqwest::Client::builder()
-            .cookie_store(true)
-            .default_headers(headers)
+            .cookie_provider(Arc::new(jar))
             .build()
             .context("Failed to create HTTP client")?;
         Ok(Self { client })
