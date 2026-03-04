@@ -34,7 +34,7 @@ pub fn extract_sample_cases(html: &str) -> anyhow::Result<Vec<(String, String)>>
         }
     }
 
-    Err(AcrsError::ScrapingFailed("No sample cases found".to_string()).into())
+    Ok(vec![])
 }
 
 fn extract_samples_from(document: &Html, section_css: &str) -> Vec<(String, String)> {
@@ -290,7 +290,8 @@ mod tests {
     #[test]
     fn test_extract_sample_cases_no_samples() {
         let html = r#"<html><body><div id="task-statement"></div></body></html>"#;
-        assert!(extract_sample_cases(html).is_err());
+        let cases = extract_sample_cases(html).unwrap();
+        assert!(cases.is_empty());
     }
 
     #[test]

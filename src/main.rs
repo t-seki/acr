@@ -155,6 +155,7 @@ async fn main() -> anyhow::Result<()> {
             );
             pb.set_message("Fetching samples");
 
+            let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(2));
             let mut handles = Vec::new();
             for problem in &contest.problems {
                 let client = AtCoderClient::with_session(&session.revel_session)?;
@@ -162,7 +163,9 @@ async fn main() -> anyhow::Result<()> {
                 let task_screen_name = problem.task_screen_name.clone();
                 let problem_dir = workspace_dir.join(problem.alphabet.to_lowercase());
                 let pb = pb.clone();
+                let semaphore = semaphore.clone();
                 handles.push(tokio::spawn(async move {
+                    let _permit = semaphore.acquire().await?;
                     let cases = client
                         .fetch_sample_cases(&contest_id, &task_screen_name)
                         .await?;
@@ -213,6 +216,31 @@ async fn main() -> anyhow::Result<()> {
             workspace::testcase::save(&contest_dir.join(problem.to_lowercase()), &cases)?;
 
             println!("Added problem {}.", problem.to_uppercase());
+            Ok(())
+        }
+        Command::View { problem } => {
+            let url = if let Some(problem) = problem {
+                let (_, contest_id) = workspace::detect_contest_dir()?;
+                format!(
+                    "{}/contests/{}/tasks/{}_{}",
+                    atcoder::BASE_URL, contest_id, contest_id, problem.to_lowercase()
+                )
+            } else if let Ok(ctx) = workspace::detect_problem_dir() {
+                ctx.problem_url
+            } else {
+                let (_, contest_id) = workspace::detect_contest_dir()?;
+                format!("{}/contests/{}/tasks", atcoder::BASE_URL, contest_id)
+            };
+            let browser = config::global::load()
+                .map(|c| c.browser)
+                .unwrap_or_else(|_| "xdg-open".to_string());
+            let _ = std::process::Command::new(&browser)
+                .arg(&url)
+                .stdin(std::process::Stdio::null())
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .spawn();
+            println!("{}", url);
             Ok(())
         }
         Command::Test => {
