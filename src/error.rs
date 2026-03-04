@@ -14,9 +14,6 @@ pub enum AcrsError {
     #[error("Test failed ({passed}/{total} AC)")]
     TestFailed { passed: usize, total: usize },
 
-    #[error("Scraping failed: {0}")]
-    ScrapingFailed(String),
-
     #[error("Config not found. Run `acrs init` first")]
     ConfigNotFound,
 

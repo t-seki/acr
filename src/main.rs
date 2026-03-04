@@ -290,35 +290,78 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
 
-            // Read source code
+            // Read source code and copy to clipboard
             let source = std::fs::read_to_string(ctx.problem_dir.join("src/main.rs"))?;
 
-            // Submit
-            let session = config::session::load()?;
-            let client = AtCoderClient::with_session(&session.revel_session)?;
+            let copy_result = std::process::Command::new("sh")
+                .arg("-c")
+                .arg("command -v xclip >/dev/null && echo xclip || command -v xsel >/dev/null && echo xsel || command -v pbcopy >/dev/null && echo pbcopy || command -v clip.exe >/dev/null && echo clip.exe")
+                .output();
 
-            println!("\nSubmitting...");
-            client
-                .submit(&ctx.contest_id, &ctx.task_screen_name, &source)
-                .await?;
+            let copied = if let Ok(output) = copy_result {
+                let tool = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                match tool.as_str() {
+                    "xclip" => std::process::Command::new("xclip")
+                        .arg("-selection").arg("clipboard")
+                        .stdin(std::process::Stdio::piped())
+                        .spawn()
+                        .and_then(|mut child| {
+                            use std::io::Write;
+                            child.stdin.take().unwrap().write_all(source.as_bytes())?;
+                            child.wait()
+                        }).is_ok(),
+                    "xsel" => std::process::Command::new("xsel")
+                        .arg("--clipboard").arg("--input")
+                        .stdin(std::process::Stdio::piped())
+                        .spawn()
+                        .and_then(|mut child| {
+                            use std::io::Write;
+                            child.stdin.take().unwrap().write_all(source.as_bytes())?;
+                            child.wait()
+                        }).is_ok(),
+                    "pbcopy" => std::process::Command::new("pbcopy")
+                        .stdin(std::process::Stdio::piped())
+                        .spawn()
+                        .and_then(|mut child| {
+                            use std::io::Write;
+                            child.stdin.take().unwrap().write_all(source.as_bytes())?;
+                            child.wait()
+                        }).is_ok(),
+                    "clip.exe" => std::process::Command::new("clip.exe")
+                        .stdin(std::process::Stdio::piped())
+                        .spawn()
+                        .and_then(|mut child| {
+                            use std::io::Write;
+                            child.stdin.take().unwrap().write_all(source.as_bytes())?;
+                            child.wait()
+                        }).is_ok(),
+                    _ => false,
+                }
+            } else {
+                false
+            };
 
-            // Poll result
-            let spinner = indicatif::ProgressBar::new_spinner();
-            spinner.set_message("Judging...");
-            spinner.enable_steady_tick(std::time::Duration::from_millis(100));
+            if copied {
+                println!("\nSource code copied to clipboard.");
+            } else {
+                println!("\nCould not copy to clipboard. Please copy src/main.rs manually.");
+            }
 
-            let result = client.poll_result(&ctx.contest_id).await?;
-            spinner.finish_and_clear();
+            // Open submit page in browser
+            let submit_url = format!(
+                "{}/contests/{}/submit?taskScreenName={}",
+                atcoder::BASE_URL, ctx.contest_id, ctx.task_screen_name
+            );
+            println!("Opening submit page...");
+            println!("Paste your code and submit: {}", submit_url);
 
-            println!("Result: {}", result.status);
-            println!("URL: {}", result.submission_url);
-
-            // Open browser
             let browser = config::global::load()
                 .map(|c| c.browser)
                 .unwrap_or_else(|_| "xdg-open".to_string());
             let _ = std::process::Command::new(&browser)
-                .arg(&result.submission_url)
+                .arg(&submit_url)
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
                 .spawn();
 
             Ok(())
