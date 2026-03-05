@@ -71,6 +71,19 @@ pub fn detect_problem_dir_from(dir: &std::path::Path) -> anyhow::Result<ProblemC
     })
 }
 
+/// Resolve the problem context from an optional problem identifier.
+/// If a problem is specified, resolves it relative to the contest workspace directory.
+/// If not, detects the problem context from the current working directory.
+pub fn resolve_problem_context(problem: Option<&str>) -> anyhow::Result<ProblemContext> {
+    match problem {
+        Some(p) => {
+            let (contest_dir, _) = detect_contest_dir()?;
+            detect_problem_dir_from(&contest_dir.join(p.to_lowercase()))
+        }
+        None => detect_problem_dir(),
+    }
+}
+
 /// Detect the contest workspace directory from the current working directory.
 /// Checks cwd and its parent for a workspace Cargo.toml with [workspace].
 pub fn detect_contest_dir() -> anyhow::Result<(PathBuf, String)> {

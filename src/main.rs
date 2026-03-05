@@ -219,12 +219,9 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
         Command::View { problem } => {
-            let url = if let Some(problem) = problem {
-                let (_, contest_id) = workspace::detect_contest_dir()?;
-                format!(
-                    "{}/contests/{}/tasks/{}_{}",
-                    atcoder::BASE_URL, contest_id, contest_id, problem.to_lowercase()
-                )
+            let url = if let Some(ref problem) = problem {
+                let ctx = workspace::resolve_problem_context(Some(problem))?;
+                ctx.problem_url
             } else if let Ok(ctx) = workspace::detect_problem_dir() {
                 ctx.problem_url
             } else {
@@ -243,8 +240,8 @@ async fn main() -> anyhow::Result<()> {
             println!("{}", url);
             Ok(())
         }
-        Command::Test => {
-            let ctx = workspace::detect_problem_dir()?;
+        Command::Test { problem } => {
+            let ctx = workspace::resolve_problem_context(problem.as_deref())?;
             let test_cases = workspace::testcase::load(&ctx.problem_dir)?;
 
             if test_cases.is_empty() {
@@ -268,8 +265,8 @@ async fn main() -> anyhow::Result<()> {
             }
             Ok(())
         }
-        Command::Submit => {
-            let ctx = workspace::detect_problem_dir()?;
+        Command::Submit { problem } => {
+            let ctx = workspace::resolve_problem_context(problem.as_deref())?;
             let test_cases = workspace::testcase::load(&ctx.problem_dir)?;
 
             // Run tests first
