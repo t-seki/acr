@@ -2,7 +2,7 @@ use anyhow::Context;
 use serde::Deserialize;
 
 use super::{AtCoderClient, BASE_URL, ContestInfo, Problem, TestCase};
-use crate::error::AcrsError;
+use crate::error::AcrError;
 
 #[derive(Deserialize)]
 struct StandingsResponse {
@@ -32,7 +32,7 @@ impl AtCoderClient {
             .with_context(|| format!("Failed to fetch contest: {}", contest_id))?;
 
         if !resp.status().is_success() {
-            return Err(AcrsError::ContestNotFound(contest_id.to_string()).into());
+            return Err(AcrError::ContestNotFound(contest_id.to_string()).into());
         }
 
         let standings: StandingsResponse = resp

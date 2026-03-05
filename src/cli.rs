@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "acrs", about = "AtCoder CLI tool for Rust", version)]
+#[command(name = "acr", about = "AtCoder CLI tool for Rust", version)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,

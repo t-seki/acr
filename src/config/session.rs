@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-use crate::error::AcrsError;
+use crate::error::AcrError;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SessionConfig {
@@ -13,7 +13,7 @@ pub struct SessionConfig {
 // --- Internal functions (path-parameterized for testability) ---
 
 fn load_from(path: &Path) -> anyhow::Result<SessionConfig> {
-    let content = std::fs::read_to_string(path).map_err(|_| AcrsError::NotLoggedIn)?;
+    let content = std::fs::read_to_string(path).map_err(|_| AcrError::NotLoggedIn)?;
     let session: SessionConfig = serde_json::from_str(&content)
         .with_context(|| format!("Failed to parse session: {}", path.display()))?;
     Ok(session)
@@ -89,7 +89,7 @@ mod tests {
         let path = dir.path().join("nonexistent.json");
 
         let err = load_from(&path).unwrap_err();
-        assert!(err.downcast_ref::<AcrsError>().is_some());
+        assert!(err.downcast_ref::<AcrError>().is_some());
     }
 
     #[test]

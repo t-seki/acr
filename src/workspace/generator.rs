@@ -92,7 +92,7 @@ name = "{contest_id}-{alphabet}"
 version = "0.1.0"
 edition = "2021"
 
-[package.metadata.acrs]
+[package.metadata.acr]
 problem_url = "{url}"
 
 [dependencies]
