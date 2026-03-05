@@ -218,6 +218,19 @@ async fn main() -> anyhow::Result<()> {
             println!("Added problem {}.", problem.to_uppercase());
             Ok(())
         }
+        Command::Fetch { problem } => {
+            let ctx = workspace::resolve_problem_context(problem.as_deref())?;
+            let session = config::session::load()?;
+            let client = AtCoderClient::with_session(&session.revel_session)?;
+
+            println!("Fetching test cases for problem {}...", ctx.problem_alphabet.to_uppercase());
+            let cases = client
+                .fetch_sample_cases(&ctx.contest_id, &ctx.task_screen_name)
+                .await?;
+            workspace::testcase::save(&ctx.problem_dir, &cases)?;
+            println!("Saved {} test case(s).", cases.len());
+            Ok(())
+        }
         Command::View { problem } => {
             let url = if let Some(ref problem) = problem {
                 let ctx = workspace::resolve_problem_context(Some(problem))?;
