@@ -27,6 +27,9 @@ thiserror = "2"
 colored = "2"
 indicatif = "0.17"
 
+# clipboard
+arboard = "3"
+
 # utility
 dirs = "5"
 

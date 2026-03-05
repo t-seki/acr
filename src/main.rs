@@ -293,53 +293,9 @@ async fn main() -> anyhow::Result<()> {
             // Read source code and copy to clipboard
             let source = std::fs::read_to_string(ctx.problem_dir.join("src/main.rs"))?;
 
-            let copy_result = std::process::Command::new("sh")
-                .arg("-c")
-                .arg("command -v xclip >/dev/null && echo xclip || command -v xsel >/dev/null && echo xsel || command -v pbcopy >/dev/null && echo pbcopy || command -v clip.exe >/dev/null && echo clip.exe")
-                .output();
-
-            let copied = if let Ok(output) = copy_result {
-                let tool = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                match tool.as_str() {
-                    "xclip" => std::process::Command::new("xclip")
-                        .arg("-selection").arg("clipboard")
-                        .stdin(std::process::Stdio::piped())
-                        .spawn()
-                        .and_then(|mut child| {
-                            use std::io::Write;
-                            child.stdin.take().unwrap().write_all(source.as_bytes())?;
-                            child.wait()
-                        }).is_ok(),
-                    "xsel" => std::process::Command::new("xsel")
-                        .arg("--clipboard").arg("--input")
-                        .stdin(std::process::Stdio::piped())
-                        .spawn()
-                        .and_then(|mut child| {
-                            use std::io::Write;
-                            child.stdin.take().unwrap().write_all(source.as_bytes())?;
-                            child.wait()
-                        }).is_ok(),
-                    "pbcopy" => std::process::Command::new("pbcopy")
-                        .stdin(std::process::Stdio::piped())
-                        .spawn()
-                        .and_then(|mut child| {
-                            use std::io::Write;
-                            child.stdin.take().unwrap().write_all(source.as_bytes())?;
-                            child.wait()
-                        }).is_ok(),
-                    "clip.exe" => std::process::Command::new("clip.exe")
-                        .stdin(std::process::Stdio::piped())
-                        .spawn()
-                        .and_then(|mut child| {
-                            use std::io::Write;
-                            child.stdin.take().unwrap().write_all(source.as_bytes())?;
-                            child.wait()
-                        }).is_ok(),
-                    _ => false,
-                }
-            } else {
-                false
-            };
+            let copied = arboard::Clipboard::new()
+                .and_then(|mut cb| cb.set_text(&source))
+                .is_ok();
 
             if copied {
                 println!("\nSource code copied to clipboard.");
