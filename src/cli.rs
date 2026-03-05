@@ -33,6 +33,12 @@ pub enum Command {
         problem: String,
     },
 
+    /// Fetch or re-fetch sample test cases
+    Fetch {
+        /// Problem identifier (e.g. a, b, c)
+        problem: Option<String>,
+    },
+
     /// Open problem page in browser
     ///
     /// From a problem directory: opens the problem page.

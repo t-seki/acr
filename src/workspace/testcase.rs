@@ -11,6 +11,18 @@ pub fn save(problem_dir: &Path, test_cases: &[TestCase]) -> anyhow::Result<()> {
     std::fs::create_dir_all(&tests_dir)
         .with_context(|| format!("Failed to create tests dir: {}", tests_dir.display()))?;
 
+    // Remove existing test case files to avoid stale data
+    if let Ok(entries) = std::fs::read_dir(&tests_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                if ext == "in" || ext == "out" {
+                    let _ = std::fs::remove_file(&path);
+                }
+            }
+        }
+    }
+
     for tc in test_cases {
         std::fs::write(tests_dir.join(format!("{}.in", tc.index)), &tc.input)
             .with_context(|| format!("Failed to write test input {}", tc.index))?;
