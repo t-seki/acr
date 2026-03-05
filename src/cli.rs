@@ -45,10 +45,16 @@ pub enum Command {
     },
 
     /// Run tests for the current problem
-    Test,
+    Test {
+        /// Problem identifier (e.g. a, b, c)
+        problem: Option<String>,
+    },
 
     /// Test and submit the current problem
-    Submit,
+    Submit {
+        /// Problem identifier (e.g. a, b, c)
+        problem: Option<String>,
+    },
 
     /// View or modify configuration
     Config {
