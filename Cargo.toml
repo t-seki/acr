@@ -6,7 +6,7 @@ description = "A CLI tool for AtCoder competitive programming in Rust"
 license = "MIT"
 repository = "https://github.com/t-seki/acr"
 readme = "README.md"
-keywords = ["atcoder", "competitive-programming", "cli"]
+keywords = ["atcoder", "competitive", "procon", "cli"]
 categories = ["command-line-utilities"]
 
 [[bin]]
