@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-use crate::error::AcrsError;
+use crate::error::AcrError;
 
 const DEFAULT_TEMPLATE: &str = r#"use proconio::input;
 
@@ -31,7 +31,7 @@ impl Default for GlobalConfig {
 // --- Internal functions (path-parameterized for testability) ---
 
 fn load_from(path: &Path) -> anyhow::Result<GlobalConfig> {
-    let content = std::fs::read_to_string(path).map_err(|_| AcrsError::ConfigNotFound)?;
+    let content = std::fs::read_to_string(path).map_err(|_| AcrError::ConfigNotFound)?;
     let config: GlobalConfig = toml::from_str(&content)
         .with_context(|| format!("Failed to parse config: {}", path.display()))?;
     Ok(config)
@@ -112,7 +112,7 @@ mod tests {
         let path = dir.path().join("nonexistent.toml");
 
         let err = load_from(&path).unwrap_err();
-        assert!(err.downcast_ref::<AcrsError>().is_some());
+        assert!(err.downcast_ref::<AcrError>().is_some());
     }
 
     #[test]

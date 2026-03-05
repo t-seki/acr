@@ -16,7 +16,7 @@ pub struct ProblemContext {
 }
 
 /// Detect the problem context from the current working directory.
-/// Reads `[package.metadata.acrs]` from the Cargo.toml in cwd.
+/// Reads `[package.metadata.acr]` from the Cargo.toml in cwd.
 pub fn detect_problem_dir() -> anyhow::Result<ProblemContext> {
     let cwd = std::env::current_dir().context("Failed to get current directory")?;
     detect_problem_dir_from(&cwd)
@@ -33,12 +33,12 @@ pub fn detect_problem_dir_from(dir: &std::path::Path) -> anyhow::Result<ProblemC
     let problem_url = doc
         .get("package")
         .and_then(|p| p.get("metadata"))
-        .and_then(|m| m.get("acrs"))
+        .and_then(|m| m.get("acr"))
         .and_then(|a| a.get("problem_url"))
         .and_then(|u| u.as_str())
         .ok_or_else(|| {
             anyhow::anyhow!(
-                "Not a problem directory: [package.metadata.acrs] not found in {}",
+                "Not a problem directory: [package.metadata.acr] not found in {}",
                 cargo_toml_path.display()
             )
         })?
@@ -116,7 +116,7 @@ name = "abc001-a"
 version = "0.1.0"
 edition = "2021"
 
-[package.metadata.acrs]
+[package.metadata.acr]
 problem_url = "https://atcoder.jp/contests/abc001/tasks/abc001_a"
 "#,
         )

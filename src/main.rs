@@ -123,7 +123,7 @@ async fn main() -> anyhow::Result<()> {
             let client = AtCoderClient::with_session(&session.revel_session)?;
             match client.check_session().await? {
                 Some(username) => println!("Logged in as {}.", username),
-                None => println!("Session expired. Run `acrs login` again."),
+                None => println!("Session expired. Run `acr login` again."),
             }
             Ok(())
         }
@@ -134,7 +134,7 @@ async fn main() -> anyhow::Result<()> {
             // Check if directory already exists
             let cwd = std::env::current_dir()?;
             if cwd.join(&contest_id).exists() {
-                return Err(error::AcrsError::ContestAlreadyExists(contest_id).into());
+                return Err(error::AcrError::ContestAlreadyExists(contest_id).into());
             }
 
             // Fetch contest info
@@ -200,7 +200,7 @@ async fn main() -> anyhow::Result<()> {
                 .problems
                 .iter()
                 .find(|p| p.alphabet.to_lowercase() == problem.to_lowercase())
-                .ok_or_else(|| error::AcrsError::ProblemNotFound(problem.clone()))?;
+                .ok_or_else(|| error::AcrError::ProblemNotFound(problem.clone()))?;
 
             let template = config::global::load_template()?;
             workspace::generator::add_problem_to_workspace(
@@ -260,7 +260,7 @@ async fn main() -> anyhow::Result<()> {
                 .filter(|(_, r)| matches!(r, runner::TestResult::Ac))
                 .count();
             if passed < results.len() {
-                return Err(error::AcrsError::TestFailed {
+                return Err(error::AcrError::TestFailed {
                     passed,
                     total: results.len(),
                 }
@@ -282,7 +282,7 @@ async fn main() -> anyhow::Result<()> {
                     .filter(|(_, r)| matches!(r, runner::TestResult::Ac))
                     .count();
                 if passed < results.len() {
-                    return Err(error::AcrsError::TestFailed {
+                    return Err(error::AcrError::TestFailed {
                         passed,
                         total: results.len(),
                     }

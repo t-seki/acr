@@ -1,8 +1,8 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum AcrsError {
-    #[error("Not logged in. Run `acrs login` first")]
+pub enum AcrError {
+    #[error("Not logged in. Run `acr login` first")]
     NotLoggedIn,
 
     #[error("Contest '{0}' not found")]
@@ -14,7 +14,7 @@ pub enum AcrsError {
     #[error("Test failed ({passed}/{total} AC)")]
     TestFailed { passed: usize, total: usize },
 
-    #[error("Config not found. Run `acrs init` first")]
+    #[error("Config not found. Run `acr init` first")]
     ConfigNotFound,
 
     #[error("Contest directory already exists: {0}")]
