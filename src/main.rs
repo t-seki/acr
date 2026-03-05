@@ -62,6 +62,15 @@ async fn main() -> anyhow::Result<()> {
                 println!("Created .cargo/config.toml");
             }
 
+            // .gitignore
+            let gitignore_path = std::env::current_dir()?.join(".gitignore");
+            if gitignore_path.exists() {
+                println!(".gitignore already exists, skipping.");
+            } else {
+                std::fs::write(&gitignore_path, "/target\n")?;
+                println!("Created .gitignore");
+            }
+
             println!("Initialization complete!");
             Ok(())
         }
