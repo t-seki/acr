@@ -30,6 +30,15 @@ acr submit              # Test and submit current problem
 acr view a              # Open problem A page in browser
 acr test a              # Run tests for problem A
 acr submit a            # Submit problem A
+
+# Session management
+acr session             # Check login status
+acr logout              # Logout from AtCoder
+
+# Configuration
+acr config              # Show current config
+acr config editor nvim  # Change editor
+acr config browser open # Change browser (default: xdg-open)
 ```
 
 ## Workspace Structure
@@ -56,6 +65,21 @@ Config files are stored in `~/.config/acr/`:
 - `config.toml` - Editor and browser settings
 - `template.rs` - Source code template
 - `session.json` - Login session
+
+### Template
+
+`acr init` creates a default template at `~/.config/acr/template.rs`:
+
+```rust
+use proconio::input;
+
+fn main() {
+    input! {
+    }
+}
+```
+
+Edit this file to customize the boilerplate generated for each problem.
 
 ## License
 
