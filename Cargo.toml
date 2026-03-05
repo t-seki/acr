@@ -1,7 +1,17 @@
 [package]
-name = "acr"
+name = "acr-cli"
 version = "0.1.0"
 edition = "2024"
+description = "A CLI tool for AtCoder competitive programming in Rust"
+license = "MIT"
+repository = "https://github.com/t-seki/acr"
+readme = "README.md"
+keywords = ["atcoder", "competitive-programming", "cli"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "acr"
+path = "src/main.rs"
 
 [dependencies]
 # CLI
