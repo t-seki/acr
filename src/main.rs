@@ -287,7 +287,7 @@ async fn main() -> anyhow::Result<()> {
             }
             Ok(())
         }
-        Command::Submit { problem } => {
+        Command::Submit { problem, force } => {
             let ctx = workspace::resolve_problem_context(problem.as_deref())?;
             let test_cases = workspace::testcase::load(&ctx.problem_dir)?;
 
@@ -300,7 +300,7 @@ async fn main() -> anyhow::Result<()> {
                     .iter()
                     .filter(|(_, r)| matches!(r, runner::TestResult::Ac))
                     .count();
-                if passed < results.len() {
+                if passed < results.len() && !force {
                     return Err(error::AcrError::TestFailed {
                         passed,
                         total: results.len(),
