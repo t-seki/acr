@@ -11,7 +11,7 @@ pub enum AcrError {
     #[error("Problem '{0}' not found")]
     ProblemNotFound(String),
 
-    #[error("Test failed ({passed}/{total} AC)")]
+    #[error("Test failed ({passed}/{total} AC). Use `acr submit --force` to submit anyway")]
     TestFailed { passed: usize, total: usize },
 
     #[error("Config not found. Run `acr init` first")]

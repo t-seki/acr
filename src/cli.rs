@@ -60,6 +60,9 @@ pub enum Command {
     Submit {
         /// Problem identifier (e.g. a, b, c)
         problem: Option<String>,
+        /// Submit even if tests fail
+        #[arg(short, long)]
+        force: bool,
     },
 
     /// View or modify configuration
