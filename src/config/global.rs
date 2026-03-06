@@ -5,7 +5,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::AcrError;
 
-const DEFAULT_TEMPLATE: &str = r#"use proconio::input;
+const DEFAULT_TEMPLATE: &str = r#"#[allow(unused_imports)]
+use itertools::Itertools;
+#[allow(unused_imports)]
+use std::collections::{HashMap, HashSet, BTreeMap, BTreeSet, VecDeque};
+use proconio::input;
 
 fn main() {
     input! {
