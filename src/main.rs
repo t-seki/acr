@@ -173,20 +173,33 @@ async fn main() -> anyhow::Result<()> {
                 let problem_dir = workspace_dir.join(problem.alphabet.to_lowercase());
                 let pb = pb.clone();
                 let semaphore = semaphore.clone();
+                let alphabet = problem.alphabet.clone();
                 handles.push(tokio::spawn(async move {
                     let _permit = semaphore.acquire().await?;
                     let cases = client
                         .fetch_sample_cases(&contest_id, &task_screen_name)
                         .await?;
+                    let count = cases.len();
                     workspace::testcase::save(&problem_dir, &cases)?;
                     pb.inc(1);
-                    Ok::<(), anyhow::Error>(())
+                    Ok::<(String, usize), anyhow::Error>((alphabet, count))
                 }));
             }
+            let mut warnings = Vec::new();
             for handle in handles {
-                handle.await??;
+                let (alphabet, count) = handle.await??;
+                if count == 0 {
+                    warnings.push(alphabet);
+                }
             }
             pb.finish_with_message("Done");
+            for alphabet in &warnings {
+                eprintln!(
+                    "Warning: No test cases found for problem {}. Use `acr fetch {}` to retry.",
+                    alphabet.to_uppercase(),
+                    alphabet.to_lowercase(),
+                );
+            }
 
             // Open editor
             let editor = config::global::load()
@@ -237,7 +250,11 @@ async fn main() -> anyhow::Result<()> {
                 .fetch_sample_cases(&ctx.contest_id, &ctx.task_screen_name)
                 .await?;
             workspace::testcase::save(&ctx.problem_dir, &cases)?;
-            println!("Saved {} test case(s).", cases.len());
+            if cases.is_empty() {
+                eprintln!("Warning: No test cases found for problem {}.", ctx.problem_alphabet.to_uppercase());
+            } else {
+                println!("Saved {} test case(s).", cases.len());
+            }
             Ok(())
         }
         Command::View { problem } => {

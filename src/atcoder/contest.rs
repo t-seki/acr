@@ -70,16 +70,38 @@ impl AtCoderClient {
             "{}/contests/{}/tasks/{}",
             BASE_URL, contest_id, task_screen_name
         );
-        let resp = self
-            .client
-            .get(&url)
-            .send()
-            .await
-            .with_context(|| format!("Failed to fetch problem: {}", task_screen_name))?;
-        let html = resp
-            .text()
-            .await
-            .with_context(|| format!("Failed to read problem page: {}", task_screen_name))?;
+
+        let max_retries = 3;
+        let mut attempts = 0;
+        let html = loop {
+            let resp = self
+                .client
+                .get(&url)
+                .send()
+                .await
+                .with_context(|| format!("Failed to fetch problem: {}", task_screen_name))?;
+            let status = resp.status();
+            if status.is_success() {
+                break resp
+                    .text()
+                    .await
+                    .with_context(|| format!("Failed to read problem page: {}", task_screen_name))?;
+            }
+            if (status == reqwest::StatusCode::TOO_MANY_REQUESTS
+                || status.is_server_error())
+                && attempts < max_retries
+            {
+                attempts += 1;
+                let delay = std::time::Duration::from_secs(1 << attempts);
+                tokio::time::sleep(delay).await;
+                continue;
+            }
+            anyhow::bail!(
+                "Failed to fetch problem {} (HTTP {})",
+                task_screen_name,
+                status
+            );
+        };
 
         let pairs = super::scraper::extract_sample_cases(&html)?;
         let test_cases = pairs
