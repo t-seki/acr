@@ -142,6 +142,17 @@ GET  https://atcoder.jp/contests/{contest_id}/standings/json
 }
 ```
 
+### 問題一覧（フォールバック：タスクページ）
+
+```
+GET  https://atcoder.jp/contests/{contest_id}/tasks
+     ※ standings/json が利用できない場合（typical90 等）のフォールバック
+
+HTMLテーブルをスクレイピング:
+- 1列目: 問題ラベル（"A", "B" / "001", "002" 等）
+- 2列目: 問題名リンク（href に /tasks/{task_screen_name} を含む）
+```
+
 ### サンプルケース取得
 
 ```
