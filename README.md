@@ -30,6 +30,7 @@ acr submit              # Test and submit current problem
 acr view a              # Open problem A page in browser
 acr test a              # Run tests for problem A
 acr submit a            # Submit problem A
+acr submissions         # Open my submissions page in browser
 
 # Session management
 acr session             # Check login status
