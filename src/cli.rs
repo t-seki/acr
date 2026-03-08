@@ -65,6 +65,9 @@ pub enum Command {
         force: bool,
     },
 
+    /// Open my submissions page in browser
+    Submissions,
+
     /// View or modify configuration
     Config {
         /// Configuration key

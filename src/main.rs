@@ -358,6 +358,24 @@ async fn main() -> anyhow::Result<()> {
 
             Ok(())
         }
+        Command::Submissions => {
+            let (_, contest_id) = workspace::detect_contest_dir()?;
+            let url = format!(
+                "{}/contests/{}/submissions/me",
+                atcoder::BASE_URL, contest_id
+            );
+            let browser = config::global::load()
+                .map(|c| c.browser)
+                .unwrap_or_else(|_| "xdg-open".to_string());
+            let _ = std::process::Command::new(&browser)
+                .arg(&url)
+                .stdin(std::process::Stdio::null())
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .spawn();
+            println!("{}", url);
+            Ok(())
+        }
         Command::Config { key, value } => {
             match (key, value) {
                 (None, None) => {
