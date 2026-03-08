@@ -23,11 +23,14 @@ acr add e               # Add a problem to the workspace
 
 # From a problem directory
 acr view                # Open current problem page in browser
+acr fetch               # Re-fetch sample test cases
 acr test                # Run sample tests for current problem
 acr submit              # Test and submit current problem
+acr submit -f           # Submit even if tests fail
 
 # From anywhere in a contest workspace
 acr view a              # Open problem A page in browser
+acr fetch a             # Re-fetch test cases for problem A
 acr test a              # Run tests for problem A
 acr submit a            # Submit problem A
 acr submissions         # Open my submissions page in browser
