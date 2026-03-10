@@ -22,6 +22,7 @@ pub enum Command {
     Session,
 
     /// Create contest workspace and open editor
+    #[command(alias = "n")]
     New {
         /// Contest ID (e.g. abc001)
         contest_id: String,
@@ -45,18 +46,21 @@ pub enum Command {
     ///
     /// From a contest directory: opens the task list,
     /// or a specific problem with PROBLEM arg.
+    #[command(alias = "v")]
     View {
         /// Problem identifier (e.g. a, b, c)
         problem: Option<String>,
     },
 
     /// Run tests for the current problem
+    #[command(alias = "t")]
     Test {
         /// Problem identifier (e.g. a, b, c)
         problem: Option<String>,
     },
 
     /// Test and submit the current problem
+    #[command(alias = "s")]
     Submit {
         /// Problem identifier (e.g. a, b, c)
         problem: Option<String>,
