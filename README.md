@@ -18,14 +18,14 @@ acr login     # Login to AtCoder
 ## Usage
 
 ```bash
-acr new abc001          # Create contest workspace and open editor
+acr new abc001          # Create contest workspace and open editor (alias: n)
 acr add e               # Add a problem to the workspace
 
 # From a problem directory
-acr view                # Open current problem page in browser
+acr view                # Open current problem page in browser (alias: v)
 acr fetch               # Re-fetch sample test cases
-acr test                # Run sample tests for current problem
-acr submit              # Test and submit current problem
+acr test                # Run sample tests for current problem (alias: t)
+acr submit              # Test and submit current problem (alias: s)
 acr submit -f           # Submit even if tests fail
 
 # From anywhere in a contest workspace
