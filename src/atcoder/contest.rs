@@ -22,8 +22,53 @@ struct TaskInfo {
 
 impl AtCoderClient {
     /// Fetch contest problem list from standings/json API.
+    /// Falls back to scraping the tasks page if standings/json is unavailable.
     pub async fn fetch_contest(&self, contest_id: &str) -> anyhow::Result<ContestInfo> {
+        // Try standings/json first
         let url = format!("{}/contests/{}/standings/json", BASE_URL, contest_id);
+        let resp = self
+            .client
+            .get(&url)
+            .send()
+            .await
+            .with_context(|| format!("Failed to fetch contest: {}", contest_id))?;
+
+        if resp.status().is_success() {
+            let standings: StandingsResponse = resp
+                .json()
+                .await
+                .with_context(|| format!("Failed to parse standings for: {}", contest_id))?;
+
+            let problems = standings
+                .task_info
+                .into_iter()
+                .map(|t| Problem {
+                    alphabet: t.assignment.clone(),
+                    url: format!(
+                        "{}/contests/{}/tasks/{}",
+                        BASE_URL, contest_id, t.task_screen_name
+                    ),
+                    name: t.task_name,
+                    task_screen_name: t.task_screen_name,
+                })
+                .collect();
+
+            return Ok(ContestInfo {
+                contest_id: contest_id.to_string(),
+                problems,
+            });
+        }
+
+        // Fallback: scrape /contests/{contest_id}/tasks page
+        self.fetch_contest_from_tasks_page(contest_id).await
+    }
+
+    /// Fetch contest problem list by scraping the tasks page.
+    async fn fetch_contest_from_tasks_page(
+        &self,
+        contest_id: &str,
+    ) -> anyhow::Result<ContestInfo> {
+        let url = format!("{}/contests/{}/tasks", BASE_URL, contest_id);
         let resp = self
             .client
             .get(&url)
@@ -35,22 +80,26 @@ impl AtCoderClient {
             return Err(AcrError::ContestNotFound(contest_id.to_string()).into());
         }
 
-        let standings: StandingsResponse = resp
-            .json()
+        let html = resp
+            .text()
             .await
-            .with_context(|| format!("Failed to parse standings for: {}", contest_id))?;
+            .with_context(|| format!("Failed to read tasks page for: {}", contest_id))?;
 
-        let problems = standings
-            .task_info
+        let task_list = super::scraper::extract_task_list(&html);
+        if task_list.is_empty() {
+            return Err(AcrError::ContestNotFound(contest_id.to_string()).into());
+        }
+
+        let problems = task_list
             .into_iter()
-            .map(|t| Problem {
-                alphabet: t.assignment.clone(),
+            .map(|(alphabet, name, task_screen_name)| Problem {
+                alphabet,
                 url: format!(
                     "{}/contests/{}/tasks/{}",
-                    BASE_URL, contest_id, t.task_screen_name
+                    BASE_URL, contest_id, task_screen_name
                 ),
-                name: t.task_name,
-                task_screen_name: t.task_screen_name,
+                name,
+                task_screen_name,
             })
             .collect();
 

@@ -50,6 +50,45 @@ fn extract_samples_from(document: &Html, section_css: &str) -> Vec<(String, Stri
     inputs.into_iter().zip(outputs).collect()
 }
 
+/// Extract task list from `/contests/{contest_id}/tasks` page.
+/// Returns a list of (alphabet, task_name, task_screen_name).
+pub fn extract_task_list(html: &str) -> Vec<(String, String, String)> {
+    let document = Html::parse_document(html);
+    let tr_selector = Selector::parse("table tbody tr").expect("valid selector");
+    let td_selector = Selector::parse("td").expect("valid selector");
+    let a_selector = Selector::parse("a").expect("valid selector");
+
+    let mut tasks = Vec::new();
+
+    for row in document.select(&tr_selector) {
+        let tds: Vec<_> = row.select(&td_selector).collect();
+        if tds.len() < 2 {
+            continue;
+        }
+
+        let alphabet = tds[0].text().collect::<String>().trim().to_string();
+        if alphabet.is_empty() {
+            continue;
+        }
+
+        if let Some(link) = tds[1].select(&a_selector).next() {
+            let task_name = link.text().collect::<String>().trim().to_string();
+            if let Some(href) = link.value().attr("href") {
+                // href is like "/contests/{contest_id}/tasks/{task_screen_name}"
+                if let Some(task_screen_name) = href.rsplit('/').next() {
+                    tasks.push((
+                        alphabet,
+                        task_name,
+                        task_screen_name.to_string(),
+                    ));
+                }
+            }
+        }
+    }
+
+    tasks
+}
+
 /// Extract username from top page HTML (li a[href^="/users/"])
 pub fn extract_username(html: &str) -> Option<String> {
     let document = Html::parse_document(html);
@@ -189,6 +228,60 @@ mod tests {
         let html = r#"<html><body><div id="task-statement"></div></body></html>"#;
         let cases = extract_sample_cases(html).unwrap();
         assert!(cases.is_empty());
+    }
+
+    #[test]
+    fn test_extract_task_list_abc() {
+        let html = r#"<html><body>
+            <table>
+                <thead><tr><th>Task</th><th>Name</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>A</td>
+                        <td><a href="/contests/abc001/tasks/abc001_1">積雪深差</a></td>
+                        <td>2 sec</td>
+                        <td>64 MiB</td>
+                    </tr>
+                    <tr>
+                        <td>B</td>
+                        <td><a href="/contests/abc001/tasks/abc001_2">視程の通報</a></td>
+                        <td>2 sec</td>
+                        <td>64 MiB</td>
+                    </tr>
+                </tbody>
+            </table>
+        </body></html>"#;
+        let tasks = extract_task_list(html);
+        assert_eq!(tasks.len(), 2);
+        assert_eq!(tasks[0], ("A".to_string(), "積雪深差".to_string(), "abc001_1".to_string()));
+        assert_eq!(tasks[1], ("B".to_string(), "視程の通報".to_string(), "abc001_2".to_string()));
+    }
+
+    #[test]
+    fn test_extract_task_list_numeric_labels() {
+        let html = r#"<html><body>
+            <table>
+                <thead><tr><th>Task</th><th>Name</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>001</td>
+                        <td><a href="/contests/typical90/tasks/typical90_a">Yokan Party（★4）</a></td>
+                        <td>2 sec</td>
+                        <td>1024 MiB</td>
+                    </tr>
+                    <tr>
+                        <td>002</td>
+                        <td><a href="/contests/typical90/tasks/typical90_b">Encyclopedia of Parentheses（★3）</a></td>
+                        <td>2 sec</td>
+                        <td>1024 MiB</td>
+                    </tr>
+                </tbody>
+            </table>
+        </body></html>"#;
+        let tasks = extract_task_list(html);
+        assert_eq!(tasks.len(), 2);
+        assert_eq!(tasks[0], ("001".to_string(), "Yokan Party（★4）".to_string(), "typical90_a".to_string()));
+        assert_eq!(tasks[1], ("002".to_string(), "Encyclopedia of Parentheses（★3）".to_string(), "typical90_b".to_string()));
     }
 
 }
