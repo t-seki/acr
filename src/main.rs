@@ -136,7 +136,7 @@ async fn main() -> anyhow::Result<()> {
             }
             Ok(())
         }
-        Command::New { contest_id } => {
+        Command::New { contest_id, problems } => {
             let session = config::session::load()?;
             let client = AtCoderClient::with_session(&session.revel_session)?;
 
@@ -150,13 +150,25 @@ async fn main() -> anyhow::Result<()> {
             println!("Fetching contest info...");
             let contest = client.fetch_contest(&contest_id).await?;
 
+            // Filter target problems
+            let filter: Vec<String> = problems.iter().map(|p| p.to_uppercase()).collect();
+            let target_problems: Vec<atcoder::Problem> = contest
+                .problems
+                .into_iter()
+                .filter(|p| filter.is_empty() || filter.contains(&p.alphabet.to_uppercase()))
+                .collect();
+
+            if target_problems.is_empty() {
+                anyhow::bail!("No matching problems found.");
+            }
+
             // Load template and create workspace
             let template = config::global::load_template()?;
             let workspace_dir =
-                workspace::generator::create_contest_workspace(&cwd, &contest_id, &contest.problems, &template)?;
+                workspace::generator::create_contest_workspace(&cwd, &contest_id, &target_problems, &template)?;
 
             // Fetch sample cases in parallel
-            let pb = indicatif::ProgressBar::new(contest.problems.len() as u64);
+            let pb = indicatif::ProgressBar::new(target_problems.len() as u64);
             pb.set_style(
                 indicatif::ProgressStyle::default_bar()
                     .template("{msg} [{bar:30}] {pos}/{len}")
@@ -166,7 +178,7 @@ async fn main() -> anyhow::Result<()> {
 
             let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(2));
             let mut handles = Vec::new();
-            for problem in &contest.problems {
+            for problem in &target_problems {
                 let client = AtCoderClient::with_session(&session.revel_session)?;
                 let contest_id = contest_id.clone();
                 let task_screen_name = problem.task_screen_name.clone();
@@ -212,32 +224,99 @@ async fn main() -> anyhow::Result<()> {
             println!("Created workspace: {}", workspace_dir.display());
             Ok(())
         }
-        Command::Add { problem } => {
+        Command::Add { problems } => {
             let (contest_dir, contest_id) = workspace::detect_contest_dir()?;
             let session = config::session::load()?;
             let client = AtCoderClient::with_session(&session.revel_session)?;
 
             let contest = client.fetch_contest(&contest_id).await?;
-            let target = contest
-                .problems
-                .iter()
-                .find(|p| p.alphabet.to_lowercase() == problem.to_lowercase())
-                .ok_or_else(|| error::AcrError::ProblemNotFound(problem.clone()))?;
+
+            // Determine target problems
+            let targets: Vec<atcoder::Problem> = if problems.is_empty() {
+                // Add all missing problems
+                contest
+                    .problems
+                    .into_iter()
+                    .filter(|p| !contest_dir.join(p.alphabet.to_lowercase()).exists())
+                    .collect()
+            } else {
+                // Add specified problems
+                let mut result = Vec::new();
+                for name in &problems {
+                    let p = contest
+                        .problems
+                        .iter()
+                        .find(|p| p.alphabet.to_uppercase() == name.to_uppercase())
+                        .ok_or_else(|| error::AcrError::ProblemNotFound(name.clone()))?
+                        .clone();
+                    result.push(p);
+                }
+                result
+            };
+
+            if targets.is_empty() {
+                println!("All problems are already set up.");
+                return Ok(());
+            }
 
             let template = config::global::load_template()?;
-            workspace::generator::add_problem_to_workspace(
-                &contest_dir,
-                &contest_id,
-                target,
-                &template,
-            )?;
 
-            let cases = client
-                .fetch_sample_cases(&contest_id, &target.task_screen_name)
-                .await?;
-            workspace::testcase::save(&contest_dir.join(problem.to_lowercase()), &cases)?;
+            // Add problems and fetch sample cases in parallel
+            let pb = indicatif::ProgressBar::new(targets.len() as u64);
+            pb.set_style(
+                indicatif::ProgressStyle::default_bar()
+                    .template("{msg} [{bar:30}] {pos}/{len}")
+                    .expect("valid template"),
+            );
+            pb.set_message("Fetching samples");
 
-            println!("Added problem {}.", problem.to_uppercase());
+            let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(2));
+            let mut handles = Vec::new();
+            for problem in &targets {
+                workspace::generator::add_problem_to_workspace(
+                    &contest_dir,
+                    &contest_id,
+                    problem,
+                    &template,
+                )?;
+
+                let client = AtCoderClient::with_session(&session.revel_session)?;
+                let contest_id = contest_id.clone();
+                let task_screen_name = problem.task_screen_name.clone();
+                let problem_dir = contest_dir.join(problem.alphabet.to_lowercase());
+                let pb = pb.clone();
+                let semaphore = semaphore.clone();
+                let alphabet = problem.alphabet.clone();
+                handles.push(tokio::spawn(async move {
+                    let _permit = semaphore.acquire().await?;
+                    let cases = client
+                        .fetch_sample_cases(&contest_id, &task_screen_name)
+                        .await?;
+                    let count = cases.len();
+                    workspace::testcase::save(&problem_dir, &cases)?;
+                    pb.inc(1);
+                    Ok::<(String, usize), anyhow::Error>((alphabet, count))
+                }));
+            }
+            let mut warnings = Vec::new();
+            for handle in handles {
+                let (alphabet, count) = handle.await??;
+                if count == 0 {
+                    warnings.push(alphabet);
+                }
+            }
+            pb.finish_with_message("Done");
+            for alphabet in &warnings {
+                eprintln!(
+                    "Warning: No test cases found for problem {}. Use `acr fetch {}` to retry.",
+                    alphabet.to_uppercase(),
+                    alphabet.to_lowercase(),
+                );
+            }
+
+            for problem in &targets {
+                println!("Added problem {}.", problem.alphabet.to_uppercase());
+            }
             Ok(())
         }
         Command::Fetch { problem } => {

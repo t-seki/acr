@@ -26,12 +26,14 @@ pub enum Command {
     New {
         /// Contest ID (e.g. abc001)
         contest_id: String,
+        /// Problem identifiers (e.g. a b c). If omitted, all problems are set up.
+        problems: Vec<String>,
     },
 
     /// Add a problem to the contest workspace
     Add {
-        /// Problem identifier (e.g. a, b, c)
-        problem: String,
+        /// Problem identifiers (e.g. a b c). If omitted, all missing problems are added.
+        problems: Vec<String>,
     },
 
     /// Fetch or re-fetch sample test cases
