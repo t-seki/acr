@@ -84,7 +84,10 @@ pub enum Command {
     },
 
     /// Open my submissions page in browser
-    Submissions,
+    Submissions {
+        /// Contest ID (e.g. abc123). If omitted, detected from current directory.
+        contest_id: Option<String>,
+    },
 
     /// View or modify configuration
     Config {
