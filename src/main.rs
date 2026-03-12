@@ -214,13 +214,29 @@ async fn main() -> anyhow::Result<()> {
                 );
             }
 
+            // Open first problem in browser
+            if let Some(first) = target_problems.first() {
+                let browser = config::global::load()
+                    .map(|c| c.browser)
+                    .unwrap_or_else(|_| "xdg-open".to_string());
+                let _ = std::process::Command::new(&browser)
+                    .arg(&first.url)
+                    .stdin(std::process::Stdio::null())
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
+                    .spawn();
+            }
+
             // Open editor
             let editor = config::global::load()
                 .map(|c| c.editor)
                 .unwrap_or_else(|_| "vim".to_string());
-            let _ = std::process::Command::new(&editor)
-                .arg(&workspace_dir)
-                .spawn();
+            let mut editor_cmd = std::process::Command::new(&editor);
+            editor_cmd.arg(&workspace_dir);
+            if let Some(first) = target_problems.first() {
+                editor_cmd.arg(workspace_dir.join(first.alphabet.to_lowercase()).join("src/main.rs"));
+            }
+            let _ = editor_cmd.spawn();
 
             println!("Created workspace: {}", workspace_dir.display());
             Ok(())
