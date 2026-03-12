@@ -15,14 +15,12 @@ pub struct AtCoderClient {
 
 #[derive(Debug, Clone)]
 pub struct ContestInfo {
-    pub contest_id: String,
     pub problems: Vec<Problem>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Problem {
     pub alphabet: String,
-    pub name: String,
     pub task_screen_name: String,
     pub url: String,
 }
@@ -35,15 +33,6 @@ pub struct TestCase {
 }
 
 impl AtCoderClient {
-    /// Create a new client without session (for login)
-    pub fn new() -> anyhow::Result<Self> {
-        let client = reqwest::Client::builder()
-            .cookie_store(true)
-            .build()
-            .context("Failed to create HTTP client")?;
-        Ok(Self { client })
-    }
-
     /// Create a client with an existing REVEL_SESSION cookie
     pub fn with_session(revel_session: &str) -> anyhow::Result<Self> {
         let jar = Jar::default();
