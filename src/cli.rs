@@ -36,10 +36,22 @@ pub enum Command {
         problems: Vec<String>,
     },
 
-    /// Fetch or re-fetch sample test cases
-    Fetch {
-        /// Problem identifier (e.g. a, b, c)
+    /// Update test cases and/or source code
+    #[command(alias = "u")]
+    Update {
+        /// Contest ID (e.g. abc123) or problem identifier (e.g. a)
+        target: Option<String>,
+        /// Problem identifier when target is a contest ID (e.g. a)
         problem: Option<String>,
+        /// Re-fetch sample test cases from AtCoder (default if no flags given)
+        #[arg(short, long)]
+        tests: bool,
+        /// Regenerate src/main.rs from template
+        #[arg(short, long)]
+        code: bool,
+        /// Update [dependencies] in Cargo.toml to the latest built-in list
+        #[arg(short, long)]
+        deps: bool,
     },
 
     /// Open problem page in browser

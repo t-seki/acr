@@ -23,17 +23,27 @@ acr add e               # Add a problem to the workspace
 
 # From a problem directory
 acr view                # Open current problem page in browser (alias: v)
-acr fetch               # Re-fetch sample test cases
+acr update              # Re-fetch sample test cases (alias: u)
+acr update -c           # Regenerate src/main.rs from template
+acr update -d           # Update Cargo.toml dependencies to latest built-in list
+acr update -tc          # Re-fetch test cases and regenerate src/main.rs
 acr test                # Run sample tests for current problem (alias: t)
 acr submit              # Test and submit current problem (alias: s)
 acr submit -f           # Submit even if tests fail
 
 # From anywhere in a contest workspace
 acr view a              # Open problem A page in browser
-acr fetch a             # Re-fetch test cases for problem A
+acr update a            # Re-fetch test cases for problem A
+acr update a -c         # Regenerate src/main.rs for problem A
+acr update              # Re-fetch test cases for all problems in the contest
 acr test a              # Run tests for problem A
 acr submit a            # Submit problem A
 acr submissions         # Open my submissions page in browser
+
+# From outside the contest workspace
+acr update abc001       # Re-fetch all test cases in abc001/
+acr update abc001 a     # Re-fetch test cases for problem A in abc001/
+acr update abc001 -cd   # Regenerate code and deps for all problems in abc001/
 
 # Session management
 acr session             # Check login status

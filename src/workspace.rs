@@ -84,6 +84,43 @@ pub fn resolve_problem_context(problem: Option<&str>) -> anyhow::Result<ProblemC
     }
 }
 
+/// List all problem contexts in a contest directory, sorted by alphabet.
+pub fn list_contest_problems(contest_dir: &std::path::Path) -> anyhow::Result<Vec<ProblemContext>> {
+    let mut problems = Vec::new();
+    for entry in std::fs::read_dir(contest_dir)
+        .with_context(|| format!("Failed to read directory: {}", contest_dir.display()))?
+    {
+        let path = entry?.path();
+        if path.is_dir() {
+            if let Ok(ctx) = detect_problem_dir_from(&path) {
+                problems.push(ctx);
+            }
+        }
+    }
+    problems.sort_by(|a, b| a.problem_alphabet.cmp(&b.problem_alphabet));
+    Ok(problems)
+}
+
+/// Find a contest directory by contest ID, searching from the current working directory.
+pub fn find_contest_dir_by_id(contest_id: &str) -> anyhow::Result<PathBuf> {
+    let cwd = std::env::current_dir().context("Failed to get current directory")?;
+    let candidate = cwd.join(contest_id);
+    if !candidate.exists() {
+        anyhow::bail!("Contest directory not found: {}", candidate.display());
+    }
+    let cargo_toml = candidate.join("Cargo.toml");
+    let content = std::fs::read_to_string(&cargo_toml)
+        .with_context(|| format!("No Cargo.toml found in {}", candidate.display()))?;
+    let doc: toml::Value = toml::from_str(&content).context("Failed to parse Cargo.toml")?;
+    if doc.get("workspace").is_none() {
+        anyhow::bail!(
+            "{} is not a contest workspace (no [workspace] in Cargo.toml)",
+            candidate.display()
+        );
+    }
+    Ok(candidate)
+}
+
 /// Detect the contest workspace directory from the current working directory.
 /// Checks cwd and its parent for a workspace Cargo.toml with [workspace].
 pub fn detect_contest_dir() -> anyhow::Result<(PathBuf, String)> {
