@@ -15,10 +15,10 @@ pub fn save(problem_dir: &Path, test_cases: &[TestCase]) -> anyhow::Result<()> {
     if let Ok(entries) = std::fs::read_dir(&tests_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                if ext == "in" || ext == "out" {
-                    let _ = std::fs::remove_file(&path);
-                }
+            if let Some(ext) = path.extension().and_then(|e| e.to_str())
+                && (ext == "in" || ext == "out")
+            {
+                let _ = std::fs::remove_file(&path);
             }
         }
     }

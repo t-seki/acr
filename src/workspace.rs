@@ -91,10 +91,10 @@ pub fn list_contest_problems(contest_dir: &std::path::Path) -> anyhow::Result<Ve
         .with_context(|| format!("Failed to read directory: {}", contest_dir.display()))?
     {
         let path = entry?.path();
-        if path.is_dir() {
-            if let Ok(ctx) = detect_problem_dir_from(&path) {
-                problems.push(ctx);
-            }
+        if path.is_dir()
+            && let Ok(ctx) = detect_problem_dir_from(&path)
+        {
+            problems.push(ctx);
         }
     }
     problems.sort_by(|a, b| a.problem_alphabet.cmp(&b.problem_alphabet));
@@ -132,17 +132,16 @@ pub fn detect_contest_dir() -> anyhow::Result<(PathBuf, String)> {
 pub fn detect_contest_dir_from(dir: &std::path::Path) -> anyhow::Result<(PathBuf, String)> {
     for candidate in [dir, dir.parent().unwrap_or(dir)] {
         let cargo_toml = candidate.join("Cargo.toml");
-        if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-            if let Ok(doc) = toml::from_str::<toml::Value>(&content) {
-                if doc.get("workspace").is_some() {
-                    let contest_id = candidate
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or("")
-                        .to_string();
-                    return Ok((candidate.to_path_buf(), contest_id));
-                }
-            }
+        if let Ok(content) = std::fs::read_to_string(&cargo_toml)
+            && let Ok(doc) = toml::from_str::<toml::Value>(&content)
+            && doc.get("workspace").is_some()
+        {
+            let contest_id = candidate
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("")
+                .to_string();
+            return Ok((candidate.to_path_buf(), contest_id));
         }
     }
     Err(anyhow::anyhow!(

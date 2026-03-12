@@ -56,10 +56,9 @@ pub fn add_problem_to_workspace(
         .get_mut("workspace")
         .and_then(|w| w.get_mut("members"))
         .and_then(|m| m.as_array_mut())
+        && !members.iter().any(|m| m.as_str() == Some(&new_member))
     {
-        if !members.iter().any(|m| m.as_str() == Some(&new_member)) {
-            members.push(toml::Value::String(new_member));
-        }
+        members.push(toml::Value::String(new_member));
     }
 
     let updated = toml::to_string(&doc).context("Failed to serialize workspace Cargo.toml")?;
