@@ -39,10 +39,6 @@ fn delete_at(path: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn exists_at(path: &Path) -> bool {
-    path.exists()
-}
-
 // --- Public API (uses default paths) ---
 
 fn session_path() -> anyhow::Result<PathBuf> {
@@ -59,10 +55,6 @@ pub fn save(session: &SessionConfig) -> anyhow::Result<()> {
 
 pub fn delete() -> anyhow::Result<()> {
     delete_at(&session_path()?)
-}
-
-pub fn exists() -> anyhow::Result<bool> {
-    Ok(exists_at(&session_path()?))
 }
 
 #[cfg(test)]
@@ -112,14 +104,4 @@ mod tests {
         delete_at(&path).unwrap();
     }
 
-    #[test]
-    fn test_exists() {
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("session.json");
-
-        assert!(!exists_at(&path));
-
-        std::fs::write(&path, "{}").unwrap();
-        assert!(exists_at(&path));
-    }
 }

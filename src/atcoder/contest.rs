@@ -14,8 +14,6 @@ struct StandingsResponse {
 struct TaskInfo {
     #[serde(rename = "Assignment")]
     assignment: String,
-    #[serde(rename = "TaskName")]
-    task_name: String,
     #[serde(rename = "TaskScreenName")]
     task_screen_name: String,
 }
@@ -48,15 +46,11 @@ impl AtCoderClient {
                         "{}/contests/{}/tasks/{}",
                         BASE_URL, contest_id, t.task_screen_name
                     ),
-                    name: t.task_name,
                     task_screen_name: t.task_screen_name,
                 })
                 .collect();
 
-            return Ok(ContestInfo {
-                contest_id: contest_id.to_string(),
-                problems,
-            });
+            return Ok(ContestInfo { problems });
         }
 
         // Fallback: scrape /contests/{contest_id}/tasks page
@@ -92,21 +86,17 @@ impl AtCoderClient {
 
         let problems = task_list
             .into_iter()
-            .map(|(alphabet, name, task_screen_name)| Problem {
+            .map(|(alphabet, _, task_screen_name)| Problem {
                 alphabet,
                 url: format!(
                     "{}/contests/{}/tasks/{}",
                     BASE_URL, contest_id, task_screen_name
                 ),
-                name,
                 task_screen_name,
             })
             .collect();
 
-        Ok(ContestInfo {
-            contest_id: contest_id.to_string(),
-            problems,
-        })
+        Ok(ContestInfo { problems })
     }
 
     /// Fetch sample test cases from a problem page.
@@ -190,6 +180,6 @@ mod tests {
         assert_eq!(resp.task_info.len(), 2);
         assert_eq!(resp.task_info[0].assignment, "A");
         assert_eq!(resp.task_info[0].task_screen_name, "abc001_a");
-        assert_eq!(resp.task_info[1].task_name, "Problem B");
+        assert_eq!(resp.task_info[1].task_screen_name, "abc001_b");
     }
 }

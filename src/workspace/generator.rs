@@ -193,13 +193,11 @@ mod tests {
         vec![
             Problem {
                 alphabet: "A".to_string(),
-                name: "Problem A".to_string(),
                 task_screen_name: "abc001_a".to_string(),
                 url: "https://atcoder.jp/contests/abc001/tasks/abc001_a".to_string(),
             },
             Problem {
                 alphabet: "B".to_string(),
-                name: "Problem B".to_string(),
                 task_screen_name: "abc001_b".to_string(),
                 url: "https://atcoder.jp/contests/abc001/tasks/abc001_b".to_string(),
             },
@@ -242,7 +240,6 @@ mod tests {
 
         let new_problem = Problem {
             alphabet: "C".to_string(),
-            name: "Problem C".to_string(),
             task_screen_name: "abc001_c".to_string(),
             url: "https://atcoder.jp/contests/abc001/tasks/abc001_c".to_string(),
         };
