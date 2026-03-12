@@ -44,6 +44,7 @@ acr submissions         # Open my submissions page in browser
 acr update abc001       # Re-fetch all test cases in abc001/
 acr update abc001 a     # Re-fetch test cases for problem A in abc001/
 acr update abc001 -cd   # Regenerate code and deps for all problems in abc001/
+acr submissions abc001  # Open submissions page for abc001
 
 # Session management
 acr session             # Check login status

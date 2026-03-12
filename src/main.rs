@@ -569,8 +569,14 @@ async fn main() -> anyhow::Result<()> {
 
             Ok(())
         }
-        Command::Submissions => {
-            let (_, contest_id) = workspace::detect_contest_dir()?;
+        Command::Submissions { contest_id } => {
+            let contest_id = match contest_id {
+                Some(id) => {
+                    workspace::find_contest_dir_by_id(&id)?;
+                    id
+                }
+                None => workspace::detect_contest_dir()?.1,
+            };
             let url = format!(
                 "{}/contests/{}/submissions/me",
                 atcoder::BASE_URL, contest_id
