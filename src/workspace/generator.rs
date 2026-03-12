@@ -69,24 +69,10 @@ pub fn add_problem_to_workspace(
     Ok(())
 }
 
-fn create_problem_dir(
-    workspace_dir: &Path,
-    contest_id: &str,
-    problem: &Problem,
-    template: &str,
-) -> anyhow::Result<()> {
-    let alphabet = problem.alphabet.to_lowercase();
-    let problem_dir = workspace_dir.join(&alphabet);
-    let src_dir = problem_dir.join("src");
-    let tests_dir = problem_dir.join("tests");
-
-    std::fs::create_dir_all(&src_dir)
-        .with_context(|| format!("Failed to create src dir: {}", src_dir.display()))?;
-    std::fs::create_dir_all(&tests_dir)
-        .with_context(|| format!("Failed to create tests dir: {}", tests_dir.display()))?;
-
-    // Generate problem Cargo.toml
-    let cargo_toml = format!(
+/// Generate problem Cargo.toml content.
+/// Used both for initial creation and for `update --deps`.
+pub fn problem_cargo_toml(contest_id: &str, alphabet: &str, url: &str) -> String {
+    format!(
         r#"[package]
 name = "{contest_id}-{alphabet}"
 version = "0.1.0"
@@ -167,8 +153,28 @@ varisat = "=0.2.2"
 "#,
         contest_id = contest_id,
         alphabet = alphabet,
-        url = problem.url,
-    );
+        url = url,
+    )
+}
+
+fn create_problem_dir(
+    workspace_dir: &Path,
+    contest_id: &str,
+    problem: &Problem,
+    template: &str,
+) -> anyhow::Result<()> {
+    let alphabet = problem.alphabet.to_lowercase();
+    let problem_dir = workspace_dir.join(&alphabet);
+    let src_dir = problem_dir.join("src");
+    let tests_dir = problem_dir.join("tests");
+
+    std::fs::create_dir_all(&src_dir)
+        .with_context(|| format!("Failed to create src dir: {}", src_dir.display()))?;
+    std::fs::create_dir_all(&tests_dir)
+        .with_context(|| format!("Failed to create tests dir: {}", tests_dir.display()))?;
+
+    // Generate problem Cargo.toml
+    let cargo_toml = problem_cargo_toml(contest_id, &alphabet, &problem.url);
     std::fs::write(problem_dir.join("Cargo.toml"), cargo_toml)
         .context("Failed to write problem Cargo.toml")?;
 

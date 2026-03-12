@@ -5,6 +5,7 @@ mod error;
 mod runner;
 mod workspace;
 
+use anyhow::Context;
 use atcoder::AtCoderClient;
 use clap::Parser;
 use cli::{Cli, Command};
@@ -207,7 +208,7 @@ async fn main() -> anyhow::Result<()> {
             pb.finish_with_message("Done");
             for alphabet in &warnings {
                 eprintln!(
-                    "Warning: No test cases found for problem {}. Use `acr fetch {}` to retry.",
+                    "Warning: No test cases found for problem {}. Use `acr update -t {}` to retry.",
                     alphabet.to_uppercase(),
                     alphabet.to_lowercase(),
                 );
@@ -308,7 +309,7 @@ async fn main() -> anyhow::Result<()> {
             pb.finish_with_message("Done");
             for alphabet in &warnings {
                 eprintln!(
-                    "Warning: No test cases found for problem {}. Use `acr fetch {}` to retry.",
+                    "Warning: No test cases found for problem {}. Use `acr update -t {}` to retry.",
                     alphabet.to_uppercase(),
                     alphabet.to_lowercase(),
                 );
@@ -319,21 +320,152 @@ async fn main() -> anyhow::Result<()> {
             }
             Ok(())
         }
-        Command::Fetch { problem } => {
-            let ctx = workspace::resolve_problem_context(problem.as_deref())?;
-            let session = config::session::load()?;
-            let client = AtCoderClient::with_session(&session.revel_session)?;
+        Command::Update { target, problem, tests, code, deps } => {
+            // Default to --tests if no flags given
+            let do_tests = tests || (!code && !deps);
+            let do_code = code;
+            let do_deps = deps;
 
-            println!("Fetching test cases for problem {}...", ctx.problem_alphabet.to_uppercase());
-            let cases = client
-                .fetch_sample_cases(&ctx.contest_id, &ctx.task_screen_name)
-                .await?;
-            workspace::testcase::save(&ctx.problem_dir, &cases)?;
-            if cases.is_empty() {
-                eprintln!("Warning: No test cases found for problem {}.", ctx.problem_alphabet.to_uppercase());
-            } else {
-                println!("Saved {} test case(s).", cases.len());
+            // Resolve update targets
+            enum UpdateScope {
+                Single(workspace::ProblemContext),
+                Contest(Vec<workspace::ProblemContext>),
             }
+            let scope = match (target.as_deref(), problem.as_deref()) {
+                (None, _) => {
+                    if let Ok(ctx) = workspace::detect_problem_dir() {
+                        UpdateScope::Single(ctx)
+                    } else {
+                        let (contest_dir, _) = workspace::detect_contest_dir()?;
+                        UpdateScope::Contest(workspace::list_contest_problems(&contest_dir)?)
+                    }
+                }
+                (Some(t), None) if t.len() == 1 => {
+                    let (contest_dir, _) = workspace::detect_contest_dir()?;
+                    UpdateScope::Single(workspace::detect_problem_dir_from(
+                        &contest_dir.join(t.to_lowercase()),
+                    )?)
+                }
+                (Some(t), None) => {
+                    let contest_dir = workspace::find_contest_dir_by_id(t)?;
+                    UpdateScope::Contest(workspace::list_contest_problems(&contest_dir)?)
+                }
+                (Some(t), Some(p)) => {
+                    let contest_dir = workspace::find_contest_dir_by_id(t)?;
+                    UpdateScope::Single(workspace::detect_problem_dir_from(
+                        &contest_dir.join(p.to_lowercase()),
+                    )?)
+                }
+            };
+
+            let contexts: Vec<workspace::ProblemContext> = match scope {
+                UpdateScope::Single(ctx) => vec![ctx],
+                UpdateScope::Contest(ctxs) => ctxs,
+            };
+
+            // --tests: re-fetch sample cases
+            if do_tests {
+                let session = config::session::load()?;
+                if contexts.len() == 1 {
+                    let ctx = &contexts[0];
+                    let client = AtCoderClient::with_session(&session.revel_session)?;
+                    println!("Fetching test cases for problem {}...", ctx.problem_alphabet.to_uppercase());
+                    let cases = client
+                        .fetch_sample_cases(&ctx.contest_id, &ctx.task_screen_name)
+                        .await?;
+                    workspace::testcase::save(&ctx.problem_dir, &cases)?;
+                    if cases.is_empty() {
+                        eprintln!("Warning: No test cases found for problem {}.", ctx.problem_alphabet.to_uppercase());
+                    } else {
+                        println!("Saved {} test case(s).", cases.len());
+                    }
+                } else {
+                    let pb = indicatif::ProgressBar::new(contexts.len() as u64);
+                    pb.set_style(
+                        indicatif::ProgressStyle::default_bar()
+                            .template("{msg} [{bar:30}] {pos}/{len}")
+                            .expect("valid template"),
+                    );
+                    pb.set_message("Fetching samples");
+
+                    let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(2));
+                    let mut handles = Vec::new();
+                    for ctx in &contexts {
+                        let client = AtCoderClient::with_session(&session.revel_session)?;
+                        let contest_id = ctx.contest_id.clone();
+                        let task_screen_name = ctx.task_screen_name.clone();
+                        let problem_dir = ctx.problem_dir.clone();
+                        let alphabet = ctx.problem_alphabet.clone();
+                        let pb = pb.clone();
+                        let semaphore = semaphore.clone();
+                        handles.push(tokio::spawn(async move {
+                            let _permit = semaphore.acquire().await?;
+                            let cases = client
+                                .fetch_sample_cases(&contest_id, &task_screen_name)
+                                .await?;
+                            let count = cases.len();
+                            workspace::testcase::save(&problem_dir, &cases)?;
+                            pb.inc(1);
+                            Ok::<(String, usize), anyhow::Error>((alphabet, count))
+                        }));
+                    }
+                    let mut warnings = Vec::new();
+                    for handle in handles {
+                        let (alphabet, count) = handle.await??;
+                        if count == 0 {
+                            warnings.push(alphabet);
+                        }
+                    }
+                    pb.finish_with_message("Done");
+                    for alphabet in &warnings {
+                        eprintln!(
+                            "Warning: No test cases found for problem {}. Use `acr update -t {}` to retry.",
+                            alphabet.to_uppercase(),
+                            alphabet.to_lowercase(),
+                        );
+                    }
+                }
+            }
+
+            // --code: regenerate src/main.rs from template
+            if do_code {
+                let template = config::global::load_template()?;
+                for ctx in &contexts {
+                    let main_rs = ctx.problem_dir.join("src/main.rs");
+                    std::fs::write(&main_rs, &template)
+                        .with_context(|| format!("Failed to write {}", main_rs.display()))?;
+                    println!("Regenerated src/main.rs for problem {}.", ctx.problem_alphabet.to_uppercase());
+                }
+            }
+
+            // --deps: update Cargo.toml dependencies
+            if do_deps {
+                for ctx in &contexts {
+                    let cargo_toml_path = ctx.problem_dir.join("Cargo.toml");
+                    let content = std::fs::read_to_string(&cargo_toml_path)
+                        .with_context(|| format!("Failed to read {}", cargo_toml_path.display()))?;
+                    let doc: toml::Value = toml::from_str(&content)
+                        .context("Failed to parse Cargo.toml")?;
+                    let name = doc
+                        .get("package")
+                        .and_then(|p| p.get("name"))
+                        .and_then(|n| n.as_str())
+                        .unwrap_or("");
+                    // name = "{contest_id}-{alphabet}"
+                    let (contest_id, alphabet) = name
+                        .split_once('-')
+                        .unwrap_or(("", name));
+                    let new_content = workspace::generator::problem_cargo_toml(
+                        contest_id,
+                        alphabet,
+                        &ctx.problem_url,
+                    );
+                    std::fs::write(&cargo_toml_path, new_content)
+                        .with_context(|| format!("Failed to write {}", cargo_toml_path.display()))?;
+                    println!("Updated dependencies for problem {}.", ctx.problem_alphabet.to_uppercase());
+                }
+            }
+
             Ok(())
         }
         Command::View { problem } => {
