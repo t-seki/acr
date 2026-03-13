@@ -137,7 +137,52 @@ async fn main() -> anyhow::Result<()> {
             }
             Ok(())
         }
-        Command::New { contest_id, problems } => {
+        Command::New { contest_id, problems, at } => {
+            // --at: wait until the specified time
+            if let Some(ref time_str) = at {
+                let target_time = chrono::NaiveTime::parse_from_str(time_str, "%H:%M")
+                    .or_else(|_| chrono::NaiveTime::parse_from_str(time_str, "%H:%M:%S"))
+                    .map_err(|_| anyhow::anyhow!("Invalid time format: '{}'. Use HH:MM (e.g. 21:00)", time_str))?;
+
+                let now = chrono::Local::now();
+                let today = now.date_naive().and_time(target_time);
+                let tomorrow = today + chrono::Duration::days(1);
+                let yesterday = today - chrono::Duration::days(1);
+
+                // Pick the nearest occurrence of HH:MM
+                let now_naive = now.naive_local();
+                let candidates = [yesterday, today, tomorrow];
+                let target = candidates
+                    .iter()
+                    .min_by_key(|c| ((**c) - now_naive).abs())
+                    .unwrap();
+                let target = target
+                    .and_local_timezone(chrono::Local)
+                    .single()
+                    .context("Failed to resolve target time")?;
+
+                if target > now {
+                    let wait = target - now;
+                    println!(
+                        "Waiting until {} ({:.0}s remaining)... Press Ctrl+C to cancel.",
+                        target.format("%H:%M"),
+                        wait.num_seconds(),
+                    );
+                    loop {
+                        let remaining = target - chrono::Local::now();
+                        if remaining <= chrono::Duration::zero() {
+                            break;
+                        }
+                        let secs = remaining.num_seconds();
+                        let mins = secs / 60;
+                        let secs = secs % 60;
+                        eprint!("\r\x1b[K  {}m {:02}s remaining...", mins, secs);
+                        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                    }
+                    eprintln!("\r\x1b[K  Time reached! Starting...");
+                }
+            }
+
             let session = config::session::load()?;
             let client = AtCoderClient::with_session(&session.revel_session)?;
 
@@ -206,6 +251,63 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
             pb.finish_with_message("Done");
+
+            // --at mode: retry if all problems have 0 test cases
+            if at.is_some() && warnings.len() == target_problems.len() && !target_problems.is_empty() {
+                let max_retry_secs = 60;
+                let retry_interval = 5;
+                let start = std::time::Instant::now();
+                eprintln!("No test cases found yet. Retrying for up to {}s...", max_retry_secs);
+                while start.elapsed().as_secs() < max_retry_secs {
+                    tokio::time::sleep(std::time::Duration::from_secs(retry_interval)).await;
+                    let mut any_found = false;
+                    for problem in &target_problems {
+                        let client = AtCoderClient::with_session(&session.revel_session)?;
+                        let cases = client
+                            .fetch_sample_cases(&contest_id, &problem.task_screen_name)
+                            .await;
+                        if let Ok(cases) = cases
+                            && !cases.is_empty()
+                        {
+                            workspace::testcase::save(
+                                &workspace_dir.join(problem.alphabet.to_lowercase()),
+                                &cases,
+                            )?;
+                            any_found = true;
+                        }
+                    }
+                    if any_found {
+                        // Fetch remaining problems
+                        for problem in &target_problems {
+                            let problem_dir = workspace_dir.join(problem.alphabet.to_lowercase());
+                            let existing = workspace::testcase::load(&problem_dir)?;
+                            if existing.is_empty() {
+                                let client = AtCoderClient::with_session(&session.revel_session)?;
+                                if let Ok(cases) = client
+                                    .fetch_sample_cases(&contest_id, &problem.task_screen_name)
+                                    .await
+                                {
+                                    workspace::testcase::save(&problem_dir, &cases)?;
+                                }
+                            }
+                        }
+                        warnings.clear();
+                        // Re-check for warnings
+                        for problem in &target_problems {
+                            let problem_dir = workspace_dir.join(problem.alphabet.to_lowercase());
+                            let cases = workspace::testcase::load(&problem_dir)?;
+                            if cases.is_empty() {
+                                warnings.push(problem.alphabet.clone());
+                            }
+                        }
+                        eprintln!("Test cases fetched.");
+                        break;
+                    }
+                    let elapsed = start.elapsed().as_secs();
+                    eprint!("\r\x1b[K  Retrying... ({}s / {}s)", elapsed, max_retry_secs);
+                }
+            }
+
             for alphabet in &warnings {
                 eprintln!(
                     "Warning: No test cases found for problem {}. Use `acr update -t {}` to retry.",
