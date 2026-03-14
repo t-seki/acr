@@ -9,6 +9,7 @@ use anyhow::Context;
 use atcoder::AtCoderClient;
 use clap::Parser;
 use cli::{Cli, Command};
+use workspace::CurrentContext;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -138,6 +139,16 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
         Command::New { contest_id, problems, at } => {
+            let current = workspace::detect_current_context();
+            match current {
+                CurrentContext::ProblemDir(_) | CurrentContext::ContestDir(_) => {
+                    anyhow::bail!(
+                        "Cannot create a new contest inside a problem or contest directory."
+                    );
+                }
+                CurrentContext::Outside => {}
+            }
+
             // --at: wait until the specified time
             if let Some(ref time_str) = at {
                 let target_time = chrono::NaiveTime::parse_from_str(time_str, "%H:%M")
@@ -344,7 +355,9 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
         Command::Add { problems } => {
-            let (contest_dir, contest_id) = workspace::detect_contest_dir()?;
+            let contest_ctx = workspace::detect_contest_dir()?;
+            let contest_dir = contest_ctx.contest_dir;
+            let contest_id = contest_ctx.contest_id;
             let session = config::session::load()?;
             let client = AtCoderClient::with_session(&session.revel_session)?;
 
@@ -438,47 +451,59 @@ async fn main() -> anyhow::Result<()> {
             }
             Ok(())
         }
-        Command::Update { target, problem, tests, code, deps } => {
+        Command::Update { args, tests, code, deps } => {
             // Default to --tests if no flags given
             let do_tests = tests || (!code && !deps);
             let do_code = code;
             let do_deps = deps;
 
-            // Resolve update targets
-            enum UpdateScope {
-                Single(workspace::ProblemContext),
-                Contest(Vec<workspace::ProblemContext>),
-            }
-            let scope = match (target.as_deref(), problem.as_deref()) {
-                (None, _) => {
-                    if let Ok(ctx) = workspace::detect_problem_dir() {
-                        UpdateScope::Single(ctx)
+            // Resolve update targets based on current context
+            let current = workspace::detect_current_context();
+            let contexts: Vec<workspace::ProblemContext> = match current {
+                CurrentContext::ProblemDir(ctx) => {
+                    if !args.is_empty() {
+                        anyhow::bail!(
+                            "Cannot specify arguments from a problem directory. Move to the contest directory."
+                        );
+                    }
+                    vec![ctx]
+                }
+                CurrentContext::ContestDir(ctx) => {
+                    if args.is_empty() {
+                        workspace::list_contest_problems(&ctx.contest_dir)?
                     } else {
-                        let (contest_dir, _) = workspace::detect_contest_dir()?;
-                        UpdateScope::Contest(workspace::list_contest_problems(&contest_dir)?)
+                        args.iter()
+                            .map(|p| {
+                                workspace::detect_problem_dir_from(
+                                    &ctx.contest_dir.join(p.to_lowercase()),
+                                )
+                                .with_context(|| format!("Problem '{}' not found", p))
+                            })
+                            .collect::<anyhow::Result<Vec<_>>>()?
                     }
                 }
-                (Some(t), None) if t.len() == 1 => {
-                    let (contest_dir, _) = workspace::detect_contest_dir()?;
-                    UpdateScope::Single(workspace::detect_problem_dir_from(
-                        &contest_dir.join(t.to_lowercase()),
-                    )?)
+                CurrentContext::Outside => {
+                    if args.is_empty() {
+                        anyhow::bail!(
+                            "Specify a contest ID, or run from a contest directory."
+                        );
+                    }
+                    let contest_id = &args[0];
+                    let ctx = workspace::find_contest_dir_by_id(contest_id)?;
+                    if args.len() == 1 {
+                        workspace::list_contest_problems(&ctx.contest_dir)?
+                    } else {
+                        args[1..]
+                            .iter()
+                            .map(|p| {
+                                workspace::detect_problem_dir_from(
+                                    &ctx.contest_dir.join(p.to_lowercase()),
+                                )
+                                .with_context(|| format!("Problem '{}' not found", p))
+                            })
+                            .collect::<anyhow::Result<Vec<_>>>()?
+                    }
                 }
-                (Some(t), None) => {
-                    let contest_dir = workspace::find_contest_dir_by_id(t)?;
-                    UpdateScope::Contest(workspace::list_contest_problems(&contest_dir)?)
-                }
-                (Some(t), Some(p)) => {
-                    let contest_dir = workspace::find_contest_dir_by_id(t)?;
-                    UpdateScope::Single(workspace::detect_problem_dir_from(
-                        &contest_dir.join(p.to_lowercase()),
-                    )?)
-                }
-            };
-
-            let contexts: Vec<workspace::ProblemContext> = match scope {
-                UpdateScope::Single(ctx) => vec![ctx],
-                UpdateScope::Contest(ctxs) => ctxs,
             };
 
             // --tests: re-fetch sample cases
@@ -587,14 +612,32 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
         Command::View { problem } => {
-            let url = if let Some(ref problem) = problem {
-                let ctx = workspace::resolve_problem_context(Some(problem))?;
-                ctx.problem_url
-            } else if let Ok(ctx) = workspace::detect_problem_dir() {
-                ctx.problem_url
-            } else {
-                let (_, contest_id) = workspace::detect_contest_dir()?;
-                format!("{}/contests/{}/tasks", atcoder::BASE_URL, contest_id)
+            let current = workspace::detect_current_context();
+            let url = match current {
+                CurrentContext::ProblemDir(ctx) => match problem.as_deref() {
+                    Some(_) => anyhow::bail!(
+                        "Cannot specify a problem from a problem directory. Move to the contest directory."
+                    ),
+                    None => ctx.problem_url,
+                },
+                CurrentContext::ContestDir(ctx) => match problem.as_deref() {
+                    Some(p) => {
+                        workspace::detect_problem_dir_from(
+                            &ctx.contest_dir.join(p.to_lowercase()),
+                        )
+                        .with_context(|| format!("Problem '{}' not found", p))?
+                        .problem_url
+                    }
+                    None => format!(
+                        "{}/contests/{}/tasks",
+                        atcoder::BASE_URL, ctx.contest_id
+                    ),
+                },
+                CurrentContext::Outside => {
+                    anyhow::bail!(
+                        "Run this command from a problem or contest directory."
+                    )
+                }
             };
             let browser = config::global::load()
                 .map(|c| c.browser)
@@ -609,7 +652,10 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
         Command::Test { problem } => {
-            let ctx = workspace::resolve_problem_context(problem.as_deref())?;
+            let ctx = workspace::require_problem_context(
+                workspace::detect_current_context(),
+                problem.as_deref(),
+            )?;
             let test_cases = workspace::testcase::load(&ctx.problem_dir)?;
 
             if test_cases.is_empty() {
@@ -634,7 +680,10 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
         Command::Submit { problem, force } => {
-            let ctx = workspace::resolve_problem_context(problem.as_deref())?;
+            let ctx = workspace::require_problem_context(
+                workspace::detect_current_context(),
+                problem.as_deref(),
+            )?;
             let test_cases = workspace::testcase::load(&ctx.problem_dir)?;
 
             // Run tests first
@@ -688,12 +737,29 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
         Command::Submissions { contest_id } => {
-            let contest_id = match contest_id {
-                Some(id) => {
-                    workspace::find_contest_dir_by_id(&id)?;
-                    id
-                }
-                None => workspace::detect_contest_dir()?.1,
+            let current = workspace::detect_current_context();
+            let contest_id = match current {
+                CurrentContext::ProblemDir(ctx) => match contest_id {
+                    Some(_) => anyhow::bail!(
+                        "Cannot specify a contest ID from a problem directory."
+                    ),
+                    None => ctx.contest_id,
+                },
+                CurrentContext::ContestDir(ctx) => match contest_id {
+                    Some(_) => anyhow::bail!(
+                        "Cannot specify a contest ID from a contest directory."
+                    ),
+                    None => ctx.contest_id,
+                },
+                CurrentContext::Outside => match contest_id {
+                    Some(id) => {
+                        workspace::find_contest_dir_by_id(&id)?;
+                        id
+                    }
+                    None => anyhow::bail!(
+                        "Specify a contest ID or run from a contest directory."
+                    ),
+                },
             };
             let url = format!(
                 "{}/contests/{}/submissions/me",

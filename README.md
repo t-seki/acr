@@ -32,18 +32,19 @@ acr test                # Run sample tests for current problem (alias: t)
 acr submit              # Test and submit current problem (alias: s)
 acr submit -f           # Submit even if tests fail
 
-# From anywhere in a contest workspace
+# From a contest directory
 acr view a              # Open problem A page in browser
 acr update a            # Re-fetch test cases for problem A
+acr update a b c        # Re-fetch test cases for problems A, B, C
 acr update a -c         # Regenerate src/main.rs for problem A
 acr update              # Re-fetch test cases for all problems in the contest
 acr test a              # Run tests for problem A
 acr submit a            # Submit problem A
 acr submissions         # Open my submissions page in browser
 
-# From outside the contest workspace
+# From outside the contest directory
 acr update abc001       # Re-fetch all test cases in abc001/
-acr update abc001 a     # Re-fetch test cases for problem A in abc001/
+acr update abc001 a b   # Re-fetch test cases for problems A, B in abc001/
 acr update abc001 -cd   # Regenerate code and deps for all problems in abc001/
 acr submissions abc001  # Open submissions page for abc001
 
