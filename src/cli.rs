@@ -40,12 +40,18 @@ pub enum Command {
     },
 
     /// Update test cases and/or source code
+    ///
+    /// From a problem directory: updates the current problem.
+    ///
+    /// From a contest directory: updates all problems,
+    /// or specific problems with ARGS (e.g. a b c).
+    ///
+    /// From outside: specify contest ID as first arg,
+    /// optionally followed by problem names (e.g. abc123 a b).
     #[command(alias = "u")]
     Update {
-        /// Contest ID (e.g. abc123) or problem identifier (e.g. a)
-        target: Option<String>,
-        /// Problem identifier when target is a contest ID (e.g. a)
-        problem: Option<String>,
+        /// Problem names (in contest dir) or contest_id [problems...] (outside)
+        args: Vec<String>,
         /// Re-fetch sample test cases from AtCoder (default if no flags given)
         #[arg(short, long)]
         tests: bool,

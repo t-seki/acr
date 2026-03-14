@@ -15,6 +15,55 @@ pub struct ProblemContext {
     pub problem_url: String,
 }
 
+/// Context for a contest workspace directory.
+#[derive(Debug)]
+pub struct ContestContext {
+    pub contest_id: String,
+    pub contest_dir: PathBuf,
+}
+
+/// The detected context based on the current working directory.
+pub enum CurrentContext {
+    ProblemDir(ProblemContext),
+    ContestDir(ContestContext),
+    Outside,
+}
+
+/// Detect the current context from the working directory.
+pub fn detect_current_context() -> CurrentContext {
+    if let Ok(ctx) = detect_problem_dir() {
+        CurrentContext::ProblemDir(ctx)
+    } else if let Ok(ctx) = detect_contest_dir() {
+        CurrentContext::ContestDir(ctx)
+    } else {
+        CurrentContext::Outside
+    }
+}
+
+/// Resolve a problem context based on the current context and an optional problem identifier.
+/// Used by test and submit commands.
+pub fn require_problem_context(
+    current: CurrentContext,
+    problem: Option<&str>,
+) -> anyhow::Result<ProblemContext> {
+    match current {
+        CurrentContext::ProblemDir(ctx) => match problem {
+            Some(_) => anyhow::bail!(
+                "Cannot specify a problem from a problem directory. Move to the contest directory."
+            ),
+            None => Ok(ctx),
+        },
+        CurrentContext::ContestDir(ctx) => match problem {
+            Some(p) => detect_problem_dir_from(&ctx.contest_dir.join(p.to_lowercase()))
+                .with_context(|| format!("Problem '{}' not found", p)),
+            None => anyhow::bail!("Specify a problem, or run from a problem directory."),
+        },
+        CurrentContext::Outside => {
+            anyhow::bail!("Run this command from a problem or contest directory.")
+        }
+    }
+}
+
 /// Detect the problem context from the current working directory.
 /// Reads `[package.metadata.acr]` from the Cargo.toml in cwd.
 pub fn detect_problem_dir() -> anyhow::Result<ProblemContext> {
@@ -71,19 +120,6 @@ pub fn detect_problem_dir_from(dir: &std::path::Path) -> anyhow::Result<ProblemC
     })
 }
 
-/// Resolve the problem context from an optional problem identifier.
-/// If a problem is specified, resolves it relative to the contest workspace directory.
-/// If not, detects the problem context from the current working directory.
-pub fn resolve_problem_context(problem: Option<&str>) -> anyhow::Result<ProblemContext> {
-    match problem {
-        Some(p) => {
-            let (contest_dir, _) = detect_contest_dir()?;
-            detect_problem_dir_from(&contest_dir.join(p.to_lowercase()))
-        }
-        None => detect_problem_dir(),
-    }
-}
-
 /// List all problem contexts in a contest directory, sorted by alphabet.
 pub fn list_contest_problems(contest_dir: &std::path::Path) -> anyhow::Result<Vec<ProblemContext>> {
     let mut problems = Vec::new();
@@ -102,11 +138,11 @@ pub fn list_contest_problems(contest_dir: &std::path::Path) -> anyhow::Result<Ve
 }
 
 /// Find a contest directory by contest ID, searching from the current working directory.
-pub fn find_contest_dir_by_id(contest_id: &str) -> anyhow::Result<PathBuf> {
+pub fn find_contest_dir_by_id(contest_id: &str) -> anyhow::Result<ContestContext> {
     let cwd = std::env::current_dir().context("Failed to get current directory")?;
     let candidate = cwd.join(contest_id);
     if !candidate.exists() {
-        anyhow::bail!("Contest directory not found: {}", candidate.display());
+        anyhow::bail!("Contest '{}' not found", contest_id);
     }
     let cargo_toml = candidate.join("Cargo.toml");
     let content = std::fs::read_to_string(&cargo_toml)
@@ -118,18 +154,21 @@ pub fn find_contest_dir_by_id(contest_id: &str) -> anyhow::Result<PathBuf> {
             candidate.display()
         );
     }
-    Ok(candidate)
+    Ok(ContestContext {
+        contest_id: contest_id.to_string(),
+        contest_dir: candidate,
+    })
 }
 
 /// Detect the contest workspace directory from the current working directory.
 /// Checks cwd and its parent for a workspace Cargo.toml with [workspace].
-pub fn detect_contest_dir() -> anyhow::Result<(PathBuf, String)> {
+pub fn detect_contest_dir() -> anyhow::Result<ContestContext> {
     let cwd = std::env::current_dir().context("Failed to get current directory")?;
     detect_contest_dir_from(&cwd)
 }
 
 /// Detect the contest workspace directory from a given directory.
-pub fn detect_contest_dir_from(dir: &std::path::Path) -> anyhow::Result<(PathBuf, String)> {
+pub fn detect_contest_dir_from(dir: &std::path::Path) -> anyhow::Result<ContestContext> {
     for candidate in [dir, dir.parent().unwrap_or(dir)] {
         let cargo_toml = candidate.join("Cargo.toml");
         if let Ok(content) = std::fs::read_to_string(&cargo_toml)
@@ -141,7 +180,10 @@ pub fn detect_contest_dir_from(dir: &std::path::Path) -> anyhow::Result<(PathBuf
                 .and_then(|n| n.to_str())
                 .unwrap_or("")
                 .to_string();
-            return Ok((candidate.to_path_buf(), contest_id));
+            return Ok(ContestContext {
+                contest_id,
+                contest_dir: candidate.to_path_buf(),
+            });
         }
     }
     Err(anyhow::anyhow!(
@@ -203,9 +245,9 @@ problem_url = "https://atcoder.jp/contests/abc001/tasks/abc001_a"
         )
         .unwrap();
 
-        let (path, id) = detect_contest_dir_from(&ws).unwrap();
-        assert_eq!(path, ws);
-        assert_eq!(id, "abc001");
+        let ctx = detect_contest_dir_from(&ws).unwrap();
+        assert_eq!(ctx.contest_dir, ws);
+        assert_eq!(ctx.contest_id, "abc001");
     }
 
     #[test]
@@ -220,8 +262,8 @@ problem_url = "https://atcoder.jp/contests/abc001/tasks/abc001_a"
         )
         .unwrap();
 
-        let (path, id) = detect_contest_dir_from(&problem).unwrap();
-        assert_eq!(path, ws);
-        assert_eq!(id, "abc001");
+        let ctx = detect_contest_dir_from(&problem).unwrap();
+        assert_eq!(ctx.contest_dir, ws);
+        assert_eq!(ctx.contest_id, "abc001");
     }
 }
