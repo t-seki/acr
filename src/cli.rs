@@ -28,6 +28,9 @@ pub enum Command {
         contest_id: String,
         /// Problem identifiers (e.g. a b c). If omitted, all problems are set up.
         problems: Vec<String>,
+        /// Wait until the specified time to start (e.g. 21:00)
+        #[arg(long, value_name = "HH:MM")]
+        at: Option<String>,
     },
 
     /// Add a problem to the contest workspace

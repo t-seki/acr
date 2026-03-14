@@ -19,6 +19,7 @@ acr login     # Login to AtCoder
 
 ```bash
 acr new abc001          # Create contest workspace and open editor (alias: n)
+acr new abc001 --at 21:00  # Wait until 21:00, then create workspace
 acr add e               # Add a problem to the workspace
 
 # From a problem directory
