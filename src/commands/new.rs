@@ -165,14 +165,17 @@ pub async fn execute(
             Ok::<(String, usize), anyhow::Error>((alphabet, count))
         }));
     }
-    let mut warnings = Vec::new();
+    let mut results = Vec::new();
     for handle in handles {
-        let (alphabet, count) = handle.await??;
-        if count == 0 {
-            warnings.push(alphabet);
-        }
+        results.push(handle.await??);
     }
-    pb.finish_with_message("Done");
+    pb.finish_and_clear();
+
+    let mut warnings: Vec<String> = results
+        .iter()
+        .filter(|(_, count)| *count == 0)
+        .map(|(alphabet, _)| alphabet.clone())
+        .collect();
 
     // --at mode: retry if all problems have 0 test cases
     if at.is_some() && warnings.len() == target_problems.len() && !target_problems.is_empty() {
@@ -236,12 +239,20 @@ pub async fn execute(
         }
     }
 
-    for alphabet in &warnings {
-        eprintln!(
-            "Warning: No test cases found for problem {}. Use `acr update -t {}` to retry.",
-            alphabet.to_uppercase(),
-            alphabet.to_lowercase(),
-        );
+    for (alphabet, count) in &results {
+        if *count == 0 {
+            eprintln!(
+                "Warning: No test cases found for problem {}. Use `acr update -t {}` to retry.",
+                alphabet.to_uppercase(),
+                alphabet.to_lowercase(),
+            );
+        } else {
+            println!(
+                "Fetched {} test case(s) for problem {}.",
+                count,
+                alphabet.to_uppercase()
+            );
+        }
     }
 
     // Open first problem in browser

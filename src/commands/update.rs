@@ -115,20 +115,25 @@ pub async fn execute(
                     Ok::<(String, usize), anyhow::Error>((alphabet, count))
                 }));
             }
-            let mut warnings = Vec::new();
+            let mut results = Vec::new();
             for handle in handles {
-                let (alphabet, count) = handle.await??;
-                if count == 0 {
-                    warnings.push(alphabet);
-                }
+                results.push(handle.await??);
             }
-            pb.finish_with_message("Done");
-            for alphabet in &warnings {
-                eprintln!(
-                    "Warning: No test cases found for problem {}. Use `acr update -t {}` to retry.",
-                    alphabet.to_uppercase(),
-                    alphabet.to_lowercase(),
-                );
+            pb.finish_and_clear();
+            for (alphabet, count) in &results {
+                if *count == 0 {
+                    eprintln!(
+                        "Warning: No test cases found for problem {}. Use `acr update -t {}` to retry.",
+                        alphabet.to_uppercase(),
+                        alphabet.to_lowercase(),
+                    );
+                } else {
+                    println!(
+                        "Fetched {} test case(s) for problem {}.",
+                        count,
+                        alphabet.to_uppercase()
+                    );
+                }
             }
         }
     }
