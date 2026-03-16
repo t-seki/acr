@@ -6,6 +6,34 @@ use crate::error;
 use crate::workspace;
 use crate::workspace::CurrentContext;
 
+async fn retry_with_backoff<T, F, Fut>(max_secs: u64, mut f: F) -> anyhow::Result<T>
+where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = anyhow::Result<T>>,
+{
+    let start = std::time::Instant::now();
+    let mut attempt = 0u32;
+    loop {
+        match f().await {
+            Ok(v) => return Ok(v),
+            Err(e) => {
+                if start.elapsed().as_secs() >= max_secs {
+                    return Err(e);
+                }
+                let delay = std::cmp::min(2u64.pow(attempt + 1), 15);
+                attempt += 1;
+                eprintln!(
+                    "  Retrying in {}s... ({}s / {}s)",
+                    delay,
+                    start.elapsed().as_secs(),
+                    max_secs,
+                );
+                tokio::time::sleep(std::time::Duration::from_secs(delay)).await;
+            }
+        }
+    }
+}
+
 pub async fn execute(
     contest_id: String,
     problems: Vec<String>,
@@ -82,7 +110,11 @@ pub async fn execute(
 
     // Fetch contest info
     println!("Fetching contest info...");
-    let contest = client.fetch_contest(&contest_id).await?;
+    let contest = if at.is_some() {
+        retry_with_backoff(60, || client.fetch_contest(&contest_id)).await?
+    } else {
+        client.fetch_contest(&contest_id).await?
+    };
 
     // Filter target problems
     let filter: Vec<String> = problems.iter().map(|p| p.to_uppercase()).collect();
@@ -114,6 +146,7 @@ pub async fn execute(
     );
     pb.set_message("Fetching samples");
 
+    let is_at_mode = at.is_some();
     let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(2));
     let mut handles = Vec::new();
     for problem in &target_problems {
@@ -126,9 +159,16 @@ pub async fn execute(
         let alphabet = problem.alphabet.clone();
         handles.push(tokio::spawn(async move {
             let _permit = semaphore.acquire().await?;
-            let cases = client
-                .fetch_sample_cases(&contest_id, &task_screen_name)
-                .await?;
+            let cases = if is_at_mode {
+                retry_with_backoff(60, || {
+                    client.fetch_sample_cases(&contest_id, &task_screen_name)
+                })
+                .await?
+            } else {
+                client
+                    .fetch_sample_cases(&contest_id, &task_screen_name)
+                    .await?
+            };
             let count = cases.len();
             workspace::testcase::save(&problem_dir, &cases)?;
             pb.inc(1);
