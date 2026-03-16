@@ -16,10 +16,10 @@ where
     loop {
         match f().await {
             Ok(v) => return Ok(v),
-            Err(e) => {
-                if start.elapsed().as_secs() >= max_secs {
-                    return Err(e);
-                }
+            Err(e) if max_secs == 0 || start.elapsed().as_secs() >= max_secs => {
+                return Err(e);
+            }
+            Err(_) => {
                 let delay = std::cmp::min(2u64.pow(attempt + 1), 15);
                 attempt += 1;
                 eprintln!(
@@ -110,11 +110,8 @@ pub async fn execute(
 
     // Fetch contest info
     println!("Fetching contest info...");
-    let contest = if at.is_some() {
-        retry_with_backoff(60, || client.fetch_contest(&contest_id)).await?
-    } else {
-        client.fetch_contest(&contest_id).await?
-    };
+    let retry_secs = if at.is_some() { 60 } else { 0 };
+    let contest = retry_with_backoff(retry_secs, || client.fetch_contest(&contest_id)).await?;
 
     // Filter target problems
     let filter: Vec<String> = problems.iter().map(|p| p.to_uppercase()).collect();
@@ -146,7 +143,6 @@ pub async fn execute(
     );
     pb.set_message("Fetching samples");
 
-    let is_at_mode = at.is_some();
     let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(2));
     let mut handles = Vec::new();
     for problem in &target_problems {
@@ -159,16 +155,10 @@ pub async fn execute(
         let alphabet = problem.alphabet.clone();
         handles.push(tokio::spawn(async move {
             let _permit = semaphore.acquire().await?;
-            let cases = if is_at_mode {
-                retry_with_backoff(60, || {
-                    client.fetch_sample_cases(&contest_id, &task_screen_name)
-                })
-                .await?
-            } else {
-                client
-                    .fetch_sample_cases(&contest_id, &task_screen_name)
-                    .await?
-            };
+            let cases = retry_with_backoff(retry_secs, || {
+                client.fetch_sample_cases(&contest_id, &task_screen_name)
+            })
+            .await?;
             let count = cases.len();
             workspace::testcase::save(&problem_dir, &cases)?;
             pb.inc(1);
