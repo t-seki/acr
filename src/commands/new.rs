@@ -6,6 +6,34 @@ use crate::error;
 use crate::workspace;
 use crate::workspace::CurrentContext;
 
+async fn retry_with_backoff<T, F, Fut>(max_secs: u64, mut f: F) -> anyhow::Result<T>
+where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = anyhow::Result<T>>,
+{
+    let start = std::time::Instant::now();
+    let mut attempt = 0u32;
+    loop {
+        match f().await {
+            Ok(v) => return Ok(v),
+            Err(e) if max_secs == 0 || start.elapsed().as_secs() >= max_secs => {
+                return Err(e);
+            }
+            Err(_) => {
+                let delay = std::cmp::min(2u64.pow(attempt + 1), 15);
+                attempt += 1;
+                eprintln!(
+                    "  Retrying in {}s... ({}s / {}s)",
+                    delay,
+                    start.elapsed().as_secs(),
+                    max_secs,
+                );
+                tokio::time::sleep(std::time::Duration::from_secs(delay)).await;
+            }
+        }
+    }
+}
+
 pub async fn execute(
     contest_id: String,
     problems: Vec<String>,
@@ -82,7 +110,8 @@ pub async fn execute(
 
     // Fetch contest info
     println!("Fetching contest info...");
-    let contest = client.fetch_contest(&contest_id).await?;
+    let retry_secs = if at.is_some() { 60 } else { 0 };
+    let contest = retry_with_backoff(retry_secs, || client.fetch_contest(&contest_id)).await?;
 
     // Filter target problems
     let filter: Vec<String> = problems.iter().map(|p| p.to_uppercase()).collect();
@@ -126,9 +155,10 @@ pub async fn execute(
         let alphabet = problem.alphabet.clone();
         handles.push(tokio::spawn(async move {
             let _permit = semaphore.acquire().await?;
-            let cases = client
-                .fetch_sample_cases(&contest_id, &task_screen_name)
-                .await?;
+            let cases = retry_with_backoff(retry_secs, || {
+                client.fetch_sample_cases(&contest_id, &task_screen_name)
+            })
+            .await?;
             let count = cases.len();
             workspace::testcase::save(&problem_dir, &cases)?;
             pb.inc(1);
