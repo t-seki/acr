@@ -8,3 +8,4 @@ pub mod submit;
 pub mod test;
 pub mod update;
 pub mod view;
+pub mod virtual_contest;

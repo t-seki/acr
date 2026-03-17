@@ -33,6 +33,11 @@ async fn main() -> anyhow::Result<()> {
         Command::View { problem } => commands::view::execute(problem),
         Command::Test { problem } => commands::test::execute(problem).await,
         Command::Submit { problem, force } => commands::submit::execute(problem, force).await,
+        Command::Virtual {
+            contest_id,
+            problems,
+            at,
+        } => commands::virtual_contest::execute(contest_id, problems, at).await,
         Command::Submissions { contest_id } => commands::submissions::execute(contest_id),
         Command::Config { key, value } => commands::config::execute(key, value),
     }
