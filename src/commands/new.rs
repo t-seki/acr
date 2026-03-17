@@ -20,7 +20,7 @@ where
                 return Err(e);
             }
             Err(_) => {
-                let delay = std::cmp::min(2u64.pow(attempt + 1), 15);
+                let delay = std::cmp::min(2u64.pow(attempt), 15);
                 attempt += 1;
                 eprintln!(
                     "  Retrying in {}s... ({}s / {}s)",
@@ -108,6 +108,9 @@ pub async fn setup_contest_workspace(
     }
 
     // Fetch contest info
+    if is_at_mode {
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+    }
     println!("Fetching contest info...");
     let retry_secs = if is_at_mode { 60 } else { 0 };
     let contest = retry_with_backoff(retry_secs, || client.fetch_contest(contest_id)).await?;
