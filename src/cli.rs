@@ -92,6 +92,17 @@ pub enum Command {
         force: bool,
     },
 
+    /// Start a virtual contest participation
+    Virtual {
+        /// Contest ID (e.g. abc420)
+        contest_id: String,
+        /// Problem identifiers (e.g. a b c). If omitted, all problems are set up.
+        problems: Vec<String>,
+        /// Start time (e.g. 07:57). If omitted, auto-calculated (~2 min from now).
+        #[arg(long, value_name = "HH:MM")]
+        at: Option<String>,
+    },
+
     /// Open my submissions page in browser
     Submissions {
         /// Contest ID (e.g. abc123). If omitted, detected from current directory.
