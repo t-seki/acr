@@ -1,3 +1,5 @@
+use std::mem;
+
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -69,10 +71,13 @@ pub enum Command {
     ///
     /// From a contest directory: opens the task list,
     /// or a specific problem with PROBLEM arg.
+    ///
+    /// From outside: specify contest ID as first arg,
+    /// optionally followed by a problem name (e.g. abc123 a).
     #[command(alias = "v")]
     View {
-        /// Problem identifier (e.g. a, b, c)
-        problem: Option<String>,
+        /// Problem name (in contest dir) or contest_id [problem] (outside)
+        args: Vec<String>,
     },
 
     /// Run tests for the current problem
@@ -116,4 +121,47 @@ pub enum Command {
         /// Configuration value
         value: Option<String>,
     },
+}
+
+fn strip_trailing_slash_mut(s: &mut String) {
+    while s.ends_with('/') {
+        s.pop();
+    }
+}
+
+fn expand_slash_args(args: Vec<String>) -> Vec<String> {
+    args.into_iter()
+        .flat_map(|arg| {
+            arg.trim_end_matches('/')
+                .split('/')
+                .filter(|s| !s.is_empty())
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+        })
+        .collect()
+}
+
+impl Command {
+    /// Normalize CLI arguments: strip trailing slashes and expand path-style args.
+    pub fn normalize(&mut self) {
+        match self {
+            Command::View { args } | Command::Update { args, .. } => {
+                *args = expand_slash_args(mem::take(args));
+            }
+            Command::Add { problems } => {
+                *problems = expand_slash_args(mem::take(problems));
+            }
+            Command::Test { problem } | Command::Submit { problem, .. } => {
+                if let Some(p) = problem {
+                    strip_trailing_slash_mut(p);
+                }
+            }
+            Command::Submissions { contest_id } => {
+                if let Some(id) = contest_id {
+                    strip_trailing_slash_mut(id);
+                }
+            }
+            _ => {}
+        }
+    }
 }

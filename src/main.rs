@@ -11,7 +11,8 @@ use cli::{Cli, Command};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
+    cli.command.normalize();
 
     match cli.command {
         Command::Init => commands::init::execute(),
@@ -30,7 +31,7 @@ async fn main() -> anyhow::Result<()> {
             code,
             deps,
         } => commands::update::execute(args, tests, code, deps).await,
-        Command::View { problem } => commands::view::execute(problem),
+        Command::View { args } => commands::view::execute(args),
         Command::Test { problem } => commands::test::execute(problem).await,
         Command::Submit { problem, force } => commands::submit::execute(problem, force).await,
         Command::Virtual {
