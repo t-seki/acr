@@ -9,7 +9,7 @@ pub struct Cli {
     pub command: Command,
 }
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Debug, PartialEq)]
 pub enum Command {
     /// Initial setup (interactive)
     Init,
@@ -163,5 +163,174 @@ impl Command {
             }
             _ => {}
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_expand_slash_args_path_format() {
+        assert_eq!(
+            expand_slash_args(vec!["abc001/a/".to_string()]),
+            vec!["abc001", "a"]
+        );
+    }
+
+    #[test]
+    fn test_expand_slash_args_trailing_slash() {
+        assert_eq!(
+            expand_slash_args(vec!["abc001/".to_string()]),
+            vec!["abc001"]
+        );
+    }
+
+    #[test]
+    fn test_expand_slash_args_no_slash() {
+        assert_eq!(
+            expand_slash_args(vec!["abc001".to_string(), "a".to_string()]),
+            vec!["abc001", "a"]
+        );
+    }
+
+    #[test]
+    fn test_expand_slash_args_mixed() {
+        assert_eq!(
+            expand_slash_args(vec!["abc001/a".to_string(), "b".to_string()]),
+            vec!["abc001", "a", "b"]
+        );
+    }
+
+    #[test]
+    fn test_expand_slash_args_empty() {
+        assert_eq!(expand_slash_args(vec![]), Vec::<String>::new());
+    }
+
+    #[test]
+    fn test_strip_trailing_slash_mut_single() {
+        let mut s = "abc001/".to_string();
+        strip_trailing_slash_mut(&mut s);
+        assert_eq!(s, "abc001");
+    }
+
+    #[test]
+    fn test_strip_trailing_slash_mut_multiple() {
+        let mut s = "abc001//".to_string();
+        strip_trailing_slash_mut(&mut s);
+        assert_eq!(s, "abc001");
+    }
+
+    #[test]
+    fn test_strip_trailing_slash_mut_no_slash() {
+        let mut s = "abc001".to_string();
+        strip_trailing_slash_mut(&mut s);
+        assert_eq!(s, "abc001");
+    }
+
+    #[test]
+    fn test_strip_trailing_slash_mut_empty() {
+        let mut s = String::new();
+        strip_trailing_slash_mut(&mut s);
+        assert_eq!(s, "");
+    }
+
+    #[test]
+    fn test_normalize_view() {
+        let mut cmd = Command::View {
+            args: vec!["abc001/a/".to_string()],
+        };
+        cmd.normalize();
+        assert_eq!(
+            cmd,
+            Command::View {
+                args: vec!["abc001".to_string(), "a".to_string()]
+            }
+        );
+    }
+
+    #[test]
+    fn test_normalize_update() {
+        let mut cmd = Command::Update {
+            args: vec!["abc001/a/".to_string()],
+            tests: false,
+            code: false,
+            deps: false,
+        };
+        cmd.normalize();
+        assert_eq!(
+            cmd,
+            Command::Update {
+                args: vec!["abc001".to_string(), "a".to_string()],
+                tests: false,
+                code: false,
+                deps: false,
+            }
+        );
+    }
+
+    #[test]
+    fn test_normalize_add() {
+        let mut cmd = Command::Add {
+            problems: vec!["a/".to_string(), "b/".to_string()],
+        };
+        cmd.normalize();
+        assert_eq!(
+            cmd,
+            Command::Add {
+                problems: vec!["a".to_string(), "b".to_string()]
+            }
+        );
+    }
+
+    #[test]
+    fn test_normalize_test() {
+        let mut cmd = Command::Test {
+            problem: Some("a/".to_string()),
+        };
+        cmd.normalize();
+        assert_eq!(
+            cmd,
+            Command::Test {
+                problem: Some("a".to_string())
+            }
+        );
+    }
+
+    #[test]
+    fn test_normalize_submit() {
+        let mut cmd = Command::Submit {
+            problem: Some("a/".to_string()),
+            force: false,
+        };
+        cmd.normalize();
+        assert_eq!(
+            cmd,
+            Command::Submit {
+                problem: Some("a".to_string()),
+                force: false,
+            }
+        );
+    }
+
+    #[test]
+    fn test_normalize_submissions() {
+        let mut cmd = Command::Submissions {
+            contest_id: Some("abc001/".to_string()),
+        };
+        cmd.normalize();
+        assert_eq!(
+            cmd,
+            Command::Submissions {
+                contest_id: Some("abc001".to_string())
+            }
+        );
+    }
+
+    #[test]
+    fn test_normalize_test_none() {
+        let mut cmd = Command::Test { problem: None };
+        cmd.normalize();
+        assert_eq!(cmd, Command::Test { problem: None });
     }
 }

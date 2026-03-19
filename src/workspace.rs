@@ -140,7 +140,15 @@ pub fn list_contest_problems(contest_dir: &std::path::Path) -> anyhow::Result<Ve
 /// Find a contest directory by contest ID, searching from the current working directory.
 pub fn find_contest_dir_by_id(contest_id: &str) -> anyhow::Result<ContestContext> {
     let cwd = std::env::current_dir().context("Failed to get current directory")?;
-    let candidate = cwd.join(contest_id);
+    find_contest_dir_by_id_from(&cwd, contest_id)
+}
+
+/// Find a contest directory by contest ID, searching from a given base directory.
+pub fn find_contest_dir_by_id_from(
+    base_dir: &std::path::Path,
+    contest_id: &str,
+) -> anyhow::Result<ContestContext> {
+    let candidate = base_dir.join(contest_id);
     if !candidate.exists() {
         anyhow::bail!("Contest '{}' not found", contest_id);
     }
@@ -250,6 +258,44 @@ problem_url = "https://atcoder.jp/contests/abc001/tasks/abc001_a"
         assert_eq!(ctx.contest_id, "abc001");
     }
 
+    /// Create a contest workspace with problem directories for testing.
+    fn create_test_workspace(
+        base: &std::path::Path,
+        contest_id: &str,
+        problems: &[&str],
+    ) -> PathBuf {
+        let ws = base.join(contest_id);
+        std::fs::create_dir_all(&ws).unwrap();
+        let members: Vec<String> = problems.iter().map(|p| format!("\"{}\"", p)).collect();
+        std::fs::write(
+            ws.join("Cargo.toml"),
+            format!(
+                "[workspace]\nmembers = [{}]\nresolver = \"2\"\n",
+                members.join(", ")
+            ),
+        )
+        .unwrap();
+        for p in problems {
+            let problem_dir = ws.join(p);
+            std::fs::create_dir_all(&problem_dir).unwrap();
+            std::fs::write(
+                problem_dir.join("Cargo.toml"),
+                format!(
+                    r#"[package]
+name = "{contest_id}-{p}"
+version = "0.1.0"
+edition = "2021"
+
+[package.metadata.acr]
+problem_url = "https://atcoder.jp/contests/{contest_id}/tasks/{contest_id}_{p}"
+"#,
+                ),
+            )
+            .unwrap();
+        }
+        ws
+    }
+
     #[test]
     fn test_detect_contest_dir_from_problem_dir() {
         let dir = tempfile::tempdir().unwrap();
@@ -265,5 +311,108 @@ problem_url = "https://atcoder.jp/contests/abc001/tasks/abc001_a"
         let ctx = detect_contest_dir_from(&problem).unwrap();
         assert_eq!(ctx.contest_dir, ws);
         assert_eq!(ctx.contest_id, "abc001");
+    }
+
+    // find_contest_dir_by_id_from tests
+
+    #[test]
+    fn test_find_contest_dir_by_id_from_valid() {
+        let dir = tempfile::tempdir().unwrap();
+        let ws = create_test_workspace(dir.path(), "abc001", &["a"]);
+        let ctx = find_contest_dir_by_id_from(dir.path(), "abc001").unwrap();
+        assert_eq!(ctx.contest_id, "abc001");
+        assert_eq!(ctx.contest_dir, ws);
+    }
+
+    #[test]
+    fn test_find_contest_dir_by_id_from_not_found() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(find_contest_dir_by_id_from(dir.path(), "abc999").is_err());
+    }
+
+    #[test]
+    fn test_find_contest_dir_by_id_from_not_workspace() {
+        let dir = tempfile::tempdir().unwrap();
+        let not_ws = dir.path().join("abc001");
+        std::fs::create_dir_all(&not_ws).unwrap();
+        std::fs::write(
+            not_ws.join("Cargo.toml"),
+            "[package]\nname = \"test\"\n",
+        )
+        .unwrap();
+        assert!(find_contest_dir_by_id_from(dir.path(), "abc001").is_err());
+    }
+
+    // require_problem_context tests
+
+    #[test]
+    fn test_require_problem_context_problem_dir_none() {
+        let dir = tempfile::tempdir().unwrap();
+        let ws = create_test_workspace(dir.path(), "abc001", &["a"]);
+        let problem_ctx = detect_problem_dir_from(&ws.join("a")).unwrap();
+        let ctx = CurrentContext::ProblemDir(problem_ctx);
+        let result = require_problem_context(ctx, None).unwrap();
+        assert_eq!(result.contest_id, "abc001");
+        assert_eq!(result.problem_alphabet, "a");
+    }
+
+    #[test]
+    fn test_require_problem_context_problem_dir_some_error() {
+        let dir = tempfile::tempdir().unwrap();
+        let ws = create_test_workspace(dir.path(), "abc001", &["a"]);
+        let problem_ctx = detect_problem_dir_from(&ws.join("a")).unwrap();
+        let ctx = CurrentContext::ProblemDir(problem_ctx);
+        assert!(require_problem_context(ctx, Some("b")).is_err());
+    }
+
+    #[test]
+    fn test_require_problem_context_contest_dir_some() {
+        let dir = tempfile::tempdir().unwrap();
+        let ws = create_test_workspace(dir.path(), "abc001", &["a", "b"]);
+        let contest_ctx = detect_contest_dir_from(&ws).unwrap();
+        let ctx = CurrentContext::ContestDir(contest_ctx);
+        let result = require_problem_context(ctx, Some("a")).unwrap();
+        assert_eq!(result.contest_id, "abc001");
+        assert_eq!(result.problem_alphabet, "a");
+    }
+
+    #[test]
+    fn test_require_problem_context_contest_dir_none_error() {
+        let dir = tempfile::tempdir().unwrap();
+        let ws = create_test_workspace(dir.path(), "abc001", &["a"]);
+        let contest_ctx = detect_contest_dir_from(&ws).unwrap();
+        let ctx = CurrentContext::ContestDir(contest_ctx);
+        assert!(require_problem_context(ctx, None).is_err());
+    }
+
+    #[test]
+    fn test_require_problem_context_outside_error() {
+        assert!(require_problem_context(CurrentContext::Outside, None).is_err());
+        assert!(require_problem_context(CurrentContext::Outside, Some("a")).is_err());
+    }
+
+    // list_contest_problems tests
+
+    #[test]
+    fn test_list_contest_problems_sorted() {
+        let dir = tempfile::tempdir().unwrap();
+        let ws = create_test_workspace(dir.path(), "abc001", &["c", "a", "b"]);
+        let problems = list_contest_problems(&ws).unwrap();
+        let alphabets: Vec<&str> = problems.iter().map(|p| p.problem_alphabet.as_str()).collect();
+        assert_eq!(alphabets, vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn test_list_contest_problems_empty() {
+        let dir = tempfile::tempdir().unwrap();
+        let ws = dir.path().join("abc001");
+        std::fs::create_dir_all(&ws).unwrap();
+        std::fs::write(
+            ws.join("Cargo.toml"),
+            "[workspace]\nmembers = []\nresolver = \"2\"\n",
+        )
+        .unwrap();
+        let problems = list_contest_problems(&ws).unwrap();
+        assert!(problems.is_empty());
     }
 }
