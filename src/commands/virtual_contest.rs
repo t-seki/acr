@@ -1,7 +1,7 @@
 use chrono::Timelike;
 
 use crate::atcoder;
-use crate::config;
+use crate::browser;
 use crate::workspace;
 use crate::workspace::CurrentContext;
 
@@ -36,15 +36,7 @@ pub async fn execute(
 
     // Open virtual registration page in browser
     let virtual_url = format!("{}/contests/{}/virtual", atcoder::BASE_URL, contest_id);
-    let browser = config::global::load()
-        .map(|c| c.browser)
-        .unwrap_or_else(|_| "xdg-open".to_string());
-    let _ = std::process::Command::new(&browser)
-        .arg(&virtual_url)
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn();
+    browser::open(&virtual_url);
 
     if copied {
         println!(

@@ -156,10 +156,8 @@ impl Command {
                     strip_trailing_slash_mut(p);
                 }
             }
-            Command::Submissions { contest_id } => {
-                if let Some(id) = contest_id {
-                    strip_trailing_slash_mut(id);
-                }
+            Command::Submissions { contest_id: Some(id) } => {
+                strip_trailing_slash_mut(id);
             }
             _ => {}
         }

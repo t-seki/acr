@@ -1,7 +1,7 @@
 use anyhow::Context;
 
 use crate::atcoder;
-use crate::config;
+use crate::browser;
 use crate::workspace;
 use crate::workspace::CurrentContext;
 
@@ -54,15 +54,7 @@ fn resolve_url(current: CurrentContext, args: &[String]) -> anyhow::Result<Strin
 pub fn execute(args: Vec<String>) -> anyhow::Result<()> {
     let current = workspace::detect_current_context();
     let url = resolve_url(current, &args)?;
-    let browser = config::global::load()
-        .map(|c| c.browser)
-        .unwrap_or_else(|_| "xdg-open".to_string());
-    let _ = std::process::Command::new(&browser)
-        .arg(&url)
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn();
+    browser::open(&url);
     println!("{}", url);
     Ok(())
 }

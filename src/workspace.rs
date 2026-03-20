@@ -149,12 +149,9 @@ pub fn find_contest_dir_by_id_from(
     contest_id: &str,
 ) -> anyhow::Result<ContestContext> {
     let candidate = base_dir.join(contest_id);
-    if !candidate.exists() {
-        anyhow::bail!("Contest '{}' not found", contest_id);
-    }
     let cargo_toml = candidate.join("Cargo.toml");
     let content = std::fs::read_to_string(&cargo_toml)
-        .with_context(|| format!("No Cargo.toml found in {}", candidate.display()))?;
+        .with_context(|| format!("Contest '{}' not found", contest_id))?;
     let doc: toml::Value = toml::from_str(&content).context("Failed to parse Cargo.toml")?;
     if doc.get("workspace").is_none() {
         anyhow::bail!(
