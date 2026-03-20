@@ -1,6 +1,7 @@
 use anyhow::Context;
 
 use crate::atcoder::AtCoderClient;
+use crate::browser;
 use crate::config;
 use crate::error;
 use crate::workspace;
@@ -259,15 +260,7 @@ pub async fn setup_contest_workspace(
 
     // Open first problem in browser
     if let Some(first) = target_problems.first() {
-        let browser = config::global::load()
-            .map(|c| c.browser)
-            .unwrap_or_else(|_| "xdg-open".to_string());
-        let _ = std::process::Command::new(&browser)
-            .arg(&first.url)
-            .stdin(std::process::Stdio::null())
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .spawn();
+        browser::open(&first.url);
     }
 
     // Open editor

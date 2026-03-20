@@ -1,4 +1,5 @@
 mod atcoder;
+mod browser;
 mod cli;
 mod commands;
 mod config;

@@ -1,5 +1,5 @@
 use crate::atcoder;
-use crate::config;
+use crate::browser;
 use crate::error;
 use crate::runner;
 use crate::workspace;
@@ -50,14 +50,7 @@ pub async fn execute(problem: Option<String>, force: bool) -> anyhow::Result<()>
     println!("Opening submit page...");
     println!("Paste your code and submit: {}", submit_url);
 
-    let browser = config::global::load()
-        .map(|c| c.browser)
-        .unwrap_or_else(|_| "xdg-open".to_string());
-    let _ = std::process::Command::new(&browser)
-        .arg(&submit_url)
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn();
+    browser::open(&submit_url);
 
     Ok(())
 }

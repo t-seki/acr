@@ -1,5 +1,5 @@
 use crate::atcoder;
-use crate::config;
+use crate::browser;
 use crate::workspace;
 use crate::workspace::CurrentContext;
 
@@ -38,15 +38,7 @@ pub fn execute(contest_id: Option<String>) -> anyhow::Result<()> {
     let current = workspace::detect_current_context();
     let contest_id = resolve_contest_id(current, contest_id)?;
     let url = build_url(&contest_id);
-    let browser = config::global::load()
-        .map(|c| c.browser)
-        .unwrap_or_else(|_| "xdg-open".to_string());
-    let _ = std::process::Command::new(&browser)
-        .arg(&url)
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn();
+    browser::open(&url);
     println!("{}", url);
     Ok(())
 }

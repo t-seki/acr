@@ -1,18 +1,11 @@
 use crate::atcoder::AtCoderClient;
+use crate::browser;
 use crate::config;
 
 pub async fn login() -> anyhow::Result<()> {
     // Open AtCoder login page in browser
     let login_url = "https://atcoder.jp/login";
-    let browser = config::global::load()
-        .map(|c| c.browser)
-        .unwrap_or_else(|_| "xdg-open".to_string());
-    let _ = std::process::Command::new(&browser)
-        .arg(login_url)
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn();
+    browser::open(login_url);
 
     println!("Opening AtCoder login page in your browser...");
     println!();
