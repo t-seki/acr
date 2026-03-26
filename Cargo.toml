@@ -1,6 +1,6 @@
 [package]
 name = "acr-cli"
-version = "0.3.3"
+version = "0.3.4"
 edition = "2024"
 description = "A CLI tool for AtCoder competitive programming in Rust"
 license = "MIT"
