@@ -51,52 +51,74 @@ pub fn build(problem_dir: &Path) -> anyhow::Result<PathBuf> {
 
 /// Run a single test case against the binary.
 pub async fn run_test(binary: &Path, test_case: &TestCase) -> TestResult {
+    use std::process::Stdio;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::process::Command;
 
-    let result = tokio::time::timeout(TLE_TIMEOUT, async {
-        let child = Command::new(binary)
-            .stdin(std::process::Stdio::piped())
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .spawn();
+    let mut child = match Command::new(binary)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+    {
+        Ok(c) => c,
+        Err(e) => return TestResult::Re { stderr: e.to_string() },
+    };
 
-        let mut child = match child {
-            Ok(c) => c,
-            Err(e) => return TestResult::Re { stderr: e.to_string() },
-        };
+    if let Some(mut stdin) = child.stdin.take() {
+        let _ = stdin.write_all(test_case.input.as_bytes()).await;
+        drop(stdin);
+    }
 
-        // Write input to stdin
-        if let Some(mut stdin) = child.stdin.take() {
-            use tokio::io::AsyncWriteExt;
-            let _ = stdin.write_all(test_case.input.as_bytes()).await;
-            drop(stdin);
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+    let stdout_handle = tokio::spawn(async move {
+        let mut buf = Vec::new();
+        if let Some(mut out) = stdout {
+            let _ = out.read_to_end(&mut buf).await;
         }
-
-        let output = match child.wait_with_output().await {
-            Ok(o) => o,
-            Err(e) => return TestResult::Re { stderr: e.to_string() },
-        };
-
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-            return TestResult::Re { stderr };
+        buf
+    });
+    let stderr_handle = tokio::spawn(async move {
+        let mut buf = Vec::new();
+        if let Some(mut err) = stderr {
+            let _ = err.read_to_end(&mut buf).await;
         }
+        buf
+    });
 
-        let actual = String::from_utf8_lossy(&output.stdout).to_string();
-        if actual.trim_end() == test_case.expected.trim_end() {
-            TestResult::Ac
-        } else {
-            TestResult::Wa {
-                actual,
-                expected: test_case.expected.clone(),
+    let timed_out = tokio::select! {
+        status = child.wait() => {
+            match status {
+                Ok(s) if !s.success() => {
+                    let stderr_buf = stderr_handle.await.unwrap_or_default();
+                    return TestResult::Re {
+                        stderr: String::from_utf8_lossy(&stderr_buf).to_string(),
+                    };
+                }
+                Ok(_) => false,
+                Err(e) => return TestResult::Re { stderr: e.to_string() },
             }
         }
-    })
-    .await;
+        _ = tokio::time::sleep(TLE_TIMEOUT) => {
+            let _ = child.kill().await;
+            true
+        }
+    };
 
-    match result {
-        Ok(test_result) => test_result,
-        Err(_) => TestResult::Tle,
+    if timed_out {
+        return TestResult::Tle;
+    }
+
+    let stdout_buf = stdout_handle.await.unwrap_or_default();
+    let actual = String::from_utf8_lossy(&stdout_buf).to_string();
+    if actual.trim_end() == test_case.expected.trim_end() {
+        TestResult::Ac
+    } else {
+        TestResult::Wa {
+            actual,
+            expected: test_case.expected.clone(),
+        }
     }
 }
 
