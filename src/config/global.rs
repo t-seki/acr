@@ -27,8 +27,23 @@ impl Default for GlobalConfig {
     fn default() -> Self {
         Self {
             editor: "vim".to_string(),
-            browser: "xdg-open".to_string(),
+            browser: default_browser_command().to_string(),
         }
+    }
+}
+
+/// Platform-appropriate default for the `browser` config.
+///
+/// `xdg-open` only exists on Linux; macOS uses `open` and Windows accepts
+/// `explorer` for URLs. WSL deliberately stays on `xdg-open` (it wraps
+/// `wslview`), which is what the Linux branch already returns.
+pub fn default_browser_command() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "open"
+    } else if cfg!(target_os = "windows") {
+        "explorer"
+    } else {
+        "xdg-open"
     }
 }
 
@@ -90,7 +105,19 @@ mod tests {
     fn test_default_config() {
         let config = GlobalConfig::default();
         assert_eq!(config.editor, "vim");
-        assert_eq!(config.browser, "xdg-open");
+        assert_eq!(config.browser, default_browser_command());
+    }
+
+    #[test]
+    fn test_default_browser_command_platform() {
+        let browser = default_browser_command();
+        if cfg!(target_os = "macos") {
+            assert_eq!(browser, "open");
+        } else if cfg!(target_os = "windows") {
+            assert_eq!(browser, "explorer");
+        } else {
+            assert_eq!(browser, "xdg-open");
+        }
     }
 
     #[test]
