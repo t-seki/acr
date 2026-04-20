@@ -18,9 +18,5 @@ jobs:
           # workflows (publish.yml, release.yml). GITHUB_TOKEN-created events
           # cannot trigger other workflows by design.
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          # Let cargo-dist (release.yml) own the GitHub Release so it can
-          # attach prebuilt binaries and render the rich install/download body.
-          # release-please still manages the tag, Release PR and CHANGELOG.md.
-          skip-github-release: true
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json

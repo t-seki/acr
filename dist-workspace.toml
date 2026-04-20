@@ -17,3 +17,6 @@ hosting = "github"
 tap = "t-seki/homebrew-acr"
 # Publish jobs to enable (beyond the default binary archives)
 publish-jobs = ["homebrew"]
+# Attach to the draft GitHub Release that release-please already creates
+# instead of trying to create a new one (which would conflict).
+create-release = false
