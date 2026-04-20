@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.3](https://github.com/t-seki/acr/compare/v0.4.2...v0.4.3) (2026-04-20)
+
+
+### Bug Fixes
+
+* **ci:** let cargo-dist own the GitHub Release, not release-please ([b219699](https://github.com/t-seki/acr/commit/b21969971d8386e2cf2f7f42f8ff9ed59bb0dafb))
+* **ci:** let cargo-dist own the GitHub Release, not release-please ([f036b6d](https://github.com/t-seki/acr/commit/f036b6d323c5588d0e2f9560961ba44721dc817d))
+
 ## [0.4.2](https://github.com/t-seki/acr/compare/v0.4.1...v0.4.2) (2026-04-20)
 
 
