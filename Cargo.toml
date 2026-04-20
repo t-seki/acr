@@ -4,6 +4,7 @@ version = "0.4.0"
 edition = "2024"
 description = "A CLI tool for AtCoder competitive programming in Rust"
 license = "MIT"
+homepage = "https://github.com/t-seki/acr"
 repository = "https://github.com/t-seki/acr"
 readme = "README.md"
 keywords = ["atcoder", "competitive", "procon", "cli"]

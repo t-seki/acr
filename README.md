@@ -12,6 +12,9 @@ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/t-seki/acr/releases/lat
 
 # Windows (PowerShell)
 irm https://github.com/t-seki/acr/releases/latest/download/acr-cli-installer.ps1 | iex
+
+# Homebrew (macOS / Linux)
+brew install t-seki/acr/acr-cli
 ```
 
 Via Cargo:
