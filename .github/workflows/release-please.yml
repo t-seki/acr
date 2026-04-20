@@ -11,6 +11,10 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    # googleapis/release-please-action@v4 still ships Node 20, so opt into the
+    # Node 24 runtime until upstream publishes a Node 24-based release.
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
       - uses: googleapis/release-please-action@v4
         with:
