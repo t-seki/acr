@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/t-seki/acr/compare/v0.4.1...v0.4.2) (2026-04-20)
+
+
+### Bug Fixes
+
+* **ci:** use PAT for release-please so tag pushes trigger downstream workflows ([9f7a4ba](https://github.com/t-seki/acr/commit/9f7a4baa22f9e7f7f7a59028143b457fb3616474))
+* **ci:** use PAT for release-please so tag pushes trigger downstream workflows ([a198cfa](https://github.com/t-seki/acr/commit/a198cfaefa9b2ae0658252c00a4e7988385c792a))
+
 ## [0.4.1](https://github.com/t-seki/acr/compare/v0.4.0...v0.4.1) (2026-04-20)
 
 
