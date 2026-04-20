@@ -1,10 +1,9 @@
 use anyhow::Context;
 
 use crate::atcoder::AtCoderClient;
-use crate::browser;
+use crate::commands::workspace_launcher;
 use crate::config;
 use crate::error;
-use crate::launcher::parse_command_spec;
 use crate::workspace;
 use crate::workspace::CurrentContext;
 
@@ -254,35 +253,14 @@ pub async fn setup_contest_workspace(
         }
     }
 
-    // Open first problem in browser
-    if let Some(first) = target_problems.first() {
-        browser::open(&first.url);
-    }
-
-    // Open editor
-    let editor_spec = config::global::load()
-        .map(|c| c.editor)
-        .unwrap_or_else(|_| "vim".to_string());
-    let (program, user_args) = parse_command_spec(&editor_spec).unwrap_or_else(|| {
-        if !editor_spec.trim().is_empty() {
-            eprintln!(
-                "acr: could not parse editor config '{}', falling back to vim",
-                editor_spec
-            );
-        }
-        ("vim".to_string(), Vec::new())
+    let first = target_problems.first();
+    let problem_url = first.map(|p| p.url.as_str());
+    let problem_main_rs = first.map(|p| {
+        workspace_dir
+            .join(p.alphabet.to_lowercase())
+            .join("src/main.rs")
     });
-    let mut editor_cmd = std::process::Command::new(&program);
-    editor_cmd.args(&user_args);
-    editor_cmd.arg(&workspace_dir);
-    if let Some(first) = target_problems.first() {
-        editor_cmd.arg(
-            workspace_dir
-                .join(first.alphabet.to_lowercase())
-                .join("src/main.rs"),
-        );
-    }
-    let _ = editor_cmd.spawn();
+    workspace_launcher::launch_workspace(&workspace_dir, problem_url, problem_main_rs.as_deref());
 
     println!("Created workspace: {}", workspace_dir.display());
     Ok(())

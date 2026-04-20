@@ -40,6 +40,8 @@ acr login     # Login to AtCoder
 acr new abc001          # Create contest workspace and open editor (alias: n)
 acr new abc001 --at 21:00  # Wait until 21:00, then create workspace
 acr add e               # Add a problem to the workspace
+acr open abc001         # Reopen existing workspace in editor + browser (alias: o)
+acr open abc001 a       # Reopen focused on problem A
 
 # From a problem directory
 acr view                # Open current problem page in browser (alias: v)
@@ -53,6 +55,8 @@ acr submit -f           # Submit even if tests fail
 
 # From a contest directory
 acr view a              # Open problem A page in browser
+acr open                # Reopen current workspace (editor + first problem page)
+acr open a              # Reopen focused on problem A
 acr update a            # Re-fetch test cases for problem A
 acr update a b c        # Re-fetch test cases for problems A, B, C
 acr update a -c         # Regenerate src/main.rs for problem A
