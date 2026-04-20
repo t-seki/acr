@@ -4,6 +4,7 @@ use crate::atcoder::AtCoderClient;
 use crate::browser;
 use crate::config;
 use crate::error;
+use crate::launcher::parse_command_spec;
 use crate::workspace;
 use crate::workspace::CurrentContext;
 
@@ -264,10 +265,13 @@ pub async fn setup_contest_workspace(
     }
 
     // Open editor
-    let editor = config::global::load()
+    let editor_spec = config::global::load()
         .map(|c| c.editor)
         .unwrap_or_else(|_| "vim".to_string());
-    let mut editor_cmd = std::process::Command::new(&editor);
+    let (program, user_args) = parse_command_spec(&editor_spec)
+        .unwrap_or_else(|| ("vim".to_string(), Vec::new()));
+    let mut editor_cmd = std::process::Command::new(&program);
+    editor_cmd.args(&user_args);
     editor_cmd.arg(&workspace_dir);
     if let Some(first) = target_problems.first() {
         editor_cmd.arg(

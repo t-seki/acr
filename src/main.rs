@@ -4,6 +4,7 @@ mod cli;
 mod commands;
 mod config;
 mod error;
+mod launcher;
 mod runner;
 mod workspace;
 
