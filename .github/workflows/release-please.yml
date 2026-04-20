@@ -14,5 +14,9 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
+          # Use a PAT so the tag and Release PR it creates trigger downstream
+          # workflows (publish.yml, release.yml). GITHUB_TOKEN-created events
+          # cannot trigger other workflows by design.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
