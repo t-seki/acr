@@ -9,21 +9,10 @@ pub fn execute() -> anyhow::Result<()> {
     if config_path.exists() {
         println!("config.toml already exists, skipping.");
     } else {
-        print!("Editor [vim]: ");
-        std::io::Write::flush(&mut std::io::stdout())?;
-        let mut editor = String::new();
-        std::io::stdin().read_line(&mut editor)?;
-        let editor = editor.trim();
-        let editor = if editor.is_empty() {
-            "vim".to_string()
-        } else {
-            editor.to_string()
-        };
+        let editor = prompt_with_default("Editor", "vim")?;
+        let browser = prompt_with_default("Browser", "xdg-open")?;
 
-        let cfg = config::global::GlobalConfig {
-            editor,
-            browser: "xdg-open".to_string(),
-        };
+        let cfg = config::global::GlobalConfig { editor, browser };
         config::global::save(&cfg)?;
         println!("Created config.toml");
     }
@@ -59,4 +48,17 @@ pub fn execute() -> anyhow::Result<()> {
 
     println!("Initialization complete!");
     Ok(())
+}
+
+fn prompt_with_default(label: &str, default: &str) -> anyhow::Result<String> {
+    print!("{} [{}]: ", label, default);
+    std::io::Write::flush(&mut std::io::stdout())?;
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input)?;
+    let trimmed = input.trim();
+    Ok(if trimmed.is_empty() {
+        default.to_string()
+    } else {
+        trimmed.to_string()
+    })
 }

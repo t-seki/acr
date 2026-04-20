@@ -85,9 +85,10 @@ cargo install acr-cli
    - Default source template (created at `~/.config/acr/template.rs`)
 
    Re-run `acr init` anytime; or edit `~/.config/acr/config.toml` directly.
-3. **Log in to AtCoder** — `acr login` prints the login URL; paste the
-   `REVEL_SESSION` cookie value from your browser's DevTools.
-   Cookies expire after roughly a month; re-run when that happens.
+3. **Log in to AtCoder** — `acr login` opens the AtCoder login page in
+   your browser and waits for you to paste the `REVEL_SESSION` cookie
+   value. Grab it from DevTools → Application → Cookies → atcoder.jp.
+   Cookies typically last around a month; re-run when they expire.
 
 > Why paste a cookie manually? AtCoder's Cloudflare Turnstile blocks
 > automated form-login for CLI tools. Copying the cookie once via
