@@ -55,7 +55,10 @@ acr logout              # Logout from AtCoder
 # Configuration
 acr config              # Show current config
 acr config editor nvim  # Change editor
+acr config editor "code --new-window"  # Editor may include flags
 acr config browser open # Change browser (default: xdg-open)
+acr config browser "google-chrome --new-window"  # Browser may include flags
+acr config browser '"/mnt/c/Program Files/Google/Chrome/Application/chrome.exe" --new-window'  # WSL2 + Chrome
 ```
 
 ## Workspace Structure
