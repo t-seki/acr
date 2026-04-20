@@ -1,10 +1,14 @@
 /// Parse a shell-style command spec into `(program, args)`.
 ///
 /// Used for `editor` and `browser` config values so users can append flags
-/// (e.g. `"code --new-window"`) and quote paths containing spaces
-/// (e.g. `'"/mnt/c/Program Files/Google/Chrome/Application/chrome.exe" --new-window'`).
+/// (e.g. `"code --new-window"`) and quote paths containing spaces. A typical
+/// TOML value looks like `"/mnt/c/Program Files/Google/Chrome/Application/chrome.exe" --new-window`
+/// (no outer shell quotes — those are stripped by the shell when the user
+/// invokes `acr config browser '...'`).
 ///
-/// Returns `None` when the input has no tokens.
+/// Returns `None` in two cases:
+/// - the input has no tokens (empty or whitespace-only), or
+/// - shell quoting is malformed (e.g. an unterminated quote).
 pub fn parse_command_spec(spec: &str) -> Option<(String, Vec<String>)> {
     let mut parts = shlex::split(spec)?.into_iter();
     let program = parts.next()?;
@@ -48,5 +52,11 @@ mod tests {
     fn test_parse_empty_returns_none() {
         assert!(parse_command_spec("").is_none());
         assert!(parse_command_spec("   ").is_none());
+    }
+
+    #[test]
+    fn test_parse_malformed_returns_none() {
+        // shlex returns None for unterminated quotes.
+        assert!(parse_command_spec(r#"chrome --flag "unterminated"#).is_none());
     }
 }
