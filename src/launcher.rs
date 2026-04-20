@@ -37,7 +37,10 @@ mod tests {
     fn test_parse_with_quoted_path() {
         let spec = r#""/mnt/c/Program Files/Google/Chrome/Application/chrome.exe" --new-window"#;
         let (prog, args) = parse_command_spec(spec).unwrap();
-        assert_eq!(prog, "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe");
+        assert_eq!(
+            prog,
+            "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
+        );
         assert_eq!(args, vec!["--new-window".to_string()]);
     }
 
@@ -45,7 +48,10 @@ mod tests {
     fn test_parse_multiple_flags() {
         let (prog, args) = parse_command_spec("firefox --new-window --private").unwrap();
         assert_eq!(prog, "firefox");
-        assert_eq!(args, vec!["--new-window".to_string(), "--private".to_string()]);
+        assert_eq!(
+            args,
+            vec!["--new-window".to_string(), "--private".to_string()]
+        );
     }
 
     #[test]

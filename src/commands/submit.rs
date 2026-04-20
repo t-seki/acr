@@ -45,7 +45,9 @@ pub async fn execute(problem: Option<String>, force: bool) -> anyhow::Result<()>
     // Open submit page in browser
     let submit_url = format!(
         "{}/contests/{}/submit?taskScreenName={}",
-        atcoder::BASE_URL, ctx.contest_id, ctx.task_screen_name
+        atcoder::BASE_URL,
+        ctx.contest_id,
+        ctx.task_screen_name
     );
     println!("Opening submit page...");
     println!("Paste your code and submit: {}", submit_url);

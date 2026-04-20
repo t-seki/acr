@@ -46,8 +46,7 @@ fn save_to(path: &Path, config: &GlobalConfig) -> anyhow::Result<()> {
         std::fs::create_dir_all(parent)
             .with_context(|| format!("Failed to create directory: {}", parent.display()))?;
     }
-    let content =
-        toml::to_string(config).with_context(|| "Failed to serialize config to TOML")?;
+    let content = toml::to_string(config).with_context(|| "Failed to serialize config to TOML")?;
     std::fs::write(path, content)
         .with_context(|| format!("Failed to write config: {}", path.display()))?;
     Ok(())

@@ -13,9 +13,7 @@ pub async fn execute(
     let current = workspace::detect_current_context();
     match current {
         CurrentContext::ProblemDir(_) | CurrentContext::ContestDir(_) => {
-            anyhow::bail!(
-                "Cannot create a new contest inside a problem or contest directory."
-            );
+            anyhow::bail!("Cannot create a new contest inside a problem or contest directory.");
         }
         CurrentContext::Outside => {}
     }
@@ -39,15 +37,9 @@ pub async fn execute(
     browser::open(&virtual_url);
 
     if copied {
-        println!(
-            "Start time copied to clipboard: {}",
-            formatted_time
-        );
+        println!("Start time copied to clipboard: {}", formatted_time);
     } else {
-        println!(
-            "Start time: {} (clipboard copy failed)",
-            formatted_time
-        );
+        println!("Start time: {} (clipboard copy failed)", formatted_time);
     }
     println!("Opened virtual registration page. Paste the time and click register.");
 
