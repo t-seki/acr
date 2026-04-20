@@ -101,6 +101,17 @@ fn main() {
 
 Edit this file to customize the boilerplate generated for each problem.
 
+## Releasing (maintainers)
+
+Releases are automated with [release-please](https://github.com/googleapis/release-please-action) and crates.io [Trusted Publishing](https://crates.io/docs/trusted-publishing):
+
+1. Merge PRs to `main` using Conventional Commits (`feat:`, `fix:`, `chore:`, `feat!:` for breaking).
+2. A **Release PR** is automatically opened by release-please with the version bump and CHANGELOG updates.
+3. Merging the Release PR tags `vX.Y.Z` and publishes a GitHub Release.
+4. The tag push triggers `.github/workflows/publish.yml`, which uses OIDC to obtain a short-lived crates.io token and runs `cargo publish`.
+
+One-time setup on crates.io is required before the first automated publish: visit the `acr-cli` crate settings on crates.io and register the GitHub repo `t-seki/acr` with workflow filename `publish.yml` as a trusted publisher.
+
 ## License
 
 MIT
