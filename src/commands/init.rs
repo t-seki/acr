@@ -10,7 +10,9 @@ pub fn execute() -> anyhow::Result<()> {
     let config_path = config_dir.join("config.toml");
     let existed = config_path.exists();
     let existing = if existed {
-        config::global::load()?
+        // Fall back to defaults if the existing config is corrupted, so
+        // `acr init` can still be used to repair a broken file.
+        config::global::load().unwrap_or_default()
     } else {
         config::global::GlobalConfig::default()
     };
