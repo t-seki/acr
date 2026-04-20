@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/t-seki/acr/compare/v0.4.4...v0.5.0) (2026-04-20)
+
+
+### Features
+
+* add `acr open` to reopen an existing workspace ([#89](https://github.com/t-seki/acr/issues/89)) ([b655b98](https://github.com/t-seki/acr/commit/b655b985775b372f448ef75a81c863aeebe6807d))
+
 ## [0.4.4](https://github.com/t-seki/acr/compare/v0.4.3...v0.4.4) (2026-04-20)
 
 
