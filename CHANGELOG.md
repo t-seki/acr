@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.4](https://github.com/t-seki/acr/compare/v0.4.3...v0.4.4) (2026-04-20)
+
+
+### Bug Fixes
+
+* **ci:** drop draft release so release-please creates the tag too ([d35982f](https://github.com/t-seki/acr/commit/d35982f9929ee55fb73cd102ce390b27921e0412))
+* **ci:** drop release-please draft mode so it creates the tag too ([1ab94db](https://github.com/t-seki/acr/commit/1ab94dbb998585787711ca2548b61e6b9b79ea54))
+* **ci:** integrate release-please with cargo-dist via draft releases ([696cced](https://github.com/t-seki/acr/commit/696cceda5c9d07ebb181b895828e7171b15780a6))
+* **ci:** integrate release-please with cargo-dist via draft releases ([782bf55](https://github.com/t-seki/acr/commit/782bf55feec79ad8814de3b3370b333c4ecfae3a))
+
 ## [0.4.3](https://github.com/t-seki/acr/compare/v0.4.2...v0.4.3) (2026-04-20)
 
 
