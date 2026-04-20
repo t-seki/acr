@@ -3,10 +3,6 @@ name: publish
 on:
   push:
     tags:
-      # release-please tags each package as `<component>-v<version>`, so a
-      # single-crate repo gets `acr-cli-v*`. Listing both patterns keeps the
-      # workflow compatible if the prefix is ever simplified.
-      - 'acr-cli-v*'
       - 'v*'
   workflow_dispatch: {}
 
