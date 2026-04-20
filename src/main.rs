@@ -34,7 +34,12 @@ async fn main() -> anyhow::Result<()> {
         } => commands::update::execute(args, tests, code, deps).await,
         Command::View { args } => commands::view::execute(args),
         Command::Test { problem } => commands::test::execute(problem).await,
-        Command::Submit { problem, force } => commands::submit::execute(problem, force).await,
+        Command::Submit {
+            problem,
+            force,
+            web,
+            language_id,
+        } => commands::submit::execute(problem, force, web, language_id).await,
         Command::Virtual {
             contest_id,
             problems,

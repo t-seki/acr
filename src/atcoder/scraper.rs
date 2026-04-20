@@ -102,6 +102,67 @@ pub fn extract_username(html: &str) -> Option<String> {
         .map(|s| s.to_string())
 }
 
+/// Extract CSRF token from a form page (input[name="csrf_token"]).
+pub fn extract_csrf_token(html: &str) -> Option<String> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse(r#"input[name="csrf_token"]"#).expect("valid selector");
+    document
+        .select(&selector)
+        .next()
+        .and_then(|el| el.value().attr("value"))
+        .map(|s| s.to_string())
+}
+
+/// Extract the most recent submission ID from `/contests/{id}/submissions/me`.
+/// Submissions are listed newest-first; we look for the first link of the form
+/// `/contests/{contest}/submissions/{numeric_id}`.
+pub fn extract_latest_submission_id(html: &str) -> Option<u64> {
+    let document = Html::parse_document(html);
+    let selector = Selector::parse(r#"table tbody tr a[href*="/submissions/"]"#)
+        .expect("valid selector");
+    for link in document.select(&selector) {
+        if let Some(href) = link.value().attr("href")
+            && let Some(last) = href.rsplit('/').next()
+            && let Ok(id) = last.parse::<u64>()
+        {
+            return Some(id);
+        }
+    }
+    None
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct JudgeStatus {
+    /// Visible label such as "AC", "WA", "TLE", "WJ", or progress like "3/10".
+    pub label: String,
+    /// True when judging has reached a terminal state.
+    pub finished: bool,
+}
+
+/// Parse the judge status from the `Html` fragment returned by
+/// `/contests/{id}/submissions/me/status/json`. The fragment typically contains
+/// a single `.label` span. Progress (e.g. `3/10`) and the literal `WJ` count as
+/// in-progress; everything else is treated as terminal.
+pub fn extract_judge_status(html_fragment: &str) -> JudgeStatus {
+    let document = Html::parse_fragment(html_fragment);
+    let selector = Selector::parse(".label").expect("valid selector");
+    let label = document
+        .select(&selector)
+        .next()
+        .map(|el| el.text().collect::<String>().trim().to_string())
+        .unwrap_or_else(|| html_fragment.trim().to_string());
+
+    let in_progress = label == "WJ"
+        || label.split_once('/').is_some_and(|(a, b)| {
+            a.trim().parse::<u32>().is_ok() && b.trim().parse::<u32>().is_ok()
+        });
+
+    JudgeStatus {
+        label,
+        finished: !in_progress,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -255,6 +316,83 @@ mod tests {
         assert_eq!(tasks.len(), 2);
         assert_eq!(tasks[0], ("A".to_string(), "積雪深差".to_string(), "abc001_1".to_string()));
         assert_eq!(tasks[1], ("B".to_string(), "視程の通報".to_string(), "abc001_2".to_string()));
+    }
+
+    #[test]
+    fn test_extract_csrf_token_present() {
+        let html = r#"<html><body>
+            <form action="/contests/abc001/submit" method="post">
+                <input type="hidden" name="csrf_token" value="abcDEF123/+=" />
+                <textarea name="sourceCode"></textarea>
+            </form>
+        </body></html>"#;
+        assert_eq!(extract_csrf_token(html), Some("abcDEF123/+=".to_string()));
+    }
+
+    #[test]
+    fn test_extract_csrf_token_missing() {
+        let html = r#"<html><body><form></form></body></html>"#;
+        assert_eq!(extract_csrf_token(html), None);
+    }
+
+    #[test]
+    fn test_extract_latest_submission_id() {
+        let html = r#"<html><body>
+            <table>
+                <thead><tr><th>提出時刻</th><th>問題</th><th>詳細</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>2026-04-20 12:00:01</td>
+                        <td><a href="/contests/abc001/tasks/abc001_a">A</a></td>
+                        <td><a href="/contests/abc001/submissions/12345678">詳細</a></td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-20 11:30:00</td>
+                        <td><a href="/contests/abc001/tasks/abc001_a">A</a></td>
+                        <td><a href="/contests/abc001/submissions/12345600">詳細</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </body></html>"#;
+        assert_eq!(extract_latest_submission_id(html), Some(12345678));
+    }
+
+    #[test]
+    fn test_extract_latest_submission_id_none() {
+        let html = r#"<html><body><table><tbody></tbody></table></body></html>"#;
+        assert_eq!(extract_latest_submission_id(html), None);
+    }
+
+    #[test]
+    fn test_extract_judge_status_wj() {
+        let frag = r#"<span class="label label-default" data-original-title="Waiting for Judging">WJ</span>"#;
+        let status = extract_judge_status(frag);
+        assert_eq!(status.label, "WJ");
+        assert!(!status.finished);
+    }
+
+    #[test]
+    fn test_extract_judge_status_progress() {
+        let frag = r#"<span class="label label-warning">3/10</span>"#;
+        let status = extract_judge_status(frag);
+        assert_eq!(status.label, "3/10");
+        assert!(!status.finished);
+    }
+
+    #[test]
+    fn test_extract_judge_status_ac() {
+        let frag = r#"<span class="label label-success" data-original-title="Accepted">AC</span>"#;
+        let status = extract_judge_status(frag);
+        assert_eq!(status.label, "AC");
+        assert!(status.finished);
+    }
+
+    #[test]
+    fn test_extract_judge_status_wa() {
+        let frag = r#"<span class="label label-warning" data-original-title="Wrong Answer">WA</span>"#;
+        let status = extract_judge_status(frag);
+        assert_eq!(status.label, "WA");
+        assert!(status.finished);
     }
 
     #[test]

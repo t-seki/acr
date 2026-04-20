@@ -22,7 +22,7 @@ pub fn execute() -> anyhow::Result<()> {
 
         let cfg = config::global::GlobalConfig {
             editor,
-            browser: "xdg-open".to_string(),
+            ..config::global::GlobalConfig::default()
         };
         config::global::save(&cfg)?;
         println!("Created config.toml");

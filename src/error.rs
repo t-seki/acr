@@ -19,4 +19,10 @@ pub enum AcrError {
 
     #[error("Contest directory already exists: {0}")]
     ContestAlreadyExists(String),
+
+    #[error("Could not extract CSRF token from submit page")]
+    CsrfTokenNotFound,
+
+    #[error("Submission failed: {reason}")]
+    SubmissionFailed { reason: String },
 }

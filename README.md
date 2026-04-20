@@ -29,8 +29,10 @@ acr update -c           # Regenerate src/main.rs from template
 acr update -d           # Update Cargo.toml dependencies to latest built-in list
 acr update -tc          # Re-fetch test cases and regenerate src/main.rs
 acr test                # Run sample tests for current problem (alias: t)
-acr submit              # Test and submit current problem (alias: s)
+acr submit              # Test and submit via HTTP, then watch judge status (alias: s)
 acr submit -f           # Submit even if tests fail
+acr submit --web        # Copy source to clipboard and open the submit page
+acr submit --language-id 5054  # Override the AtCoder language ID for this run
 
 # From a contest directory
 acr view a              # Open problem A page in browser
@@ -53,9 +55,10 @@ acr session             # Check login status
 acr logout              # Logout from AtCoder
 
 # Configuration
-acr config              # Show current config
-acr config editor nvim  # Change editor
-acr config browser open # Change browser (default: xdg-open)
+acr config                  # Show current config
+acr config editor nvim      # Change editor
+acr config browser open     # Change browser (default: xdg-open)
+acr config language_id 5054 # Change AtCoder language ID used for `acr submit`
 ```
 
 ## Workspace Structure

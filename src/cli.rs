@@ -95,6 +95,12 @@ pub enum Command {
         /// Submit even if tests fail
         #[arg(short, long)]
         force: bool,
+        /// Open the submit page in browser instead of POSTing directly
+        #[arg(long)]
+        web: bool,
+        /// Override the AtCoder language ID for this submission
+        #[arg(long, value_name = "ID")]
+        language_id: Option<String>,
     },
 
     /// Start a virtual contest participation
@@ -300,6 +306,8 @@ mod tests {
         let mut cmd = Command::Submit {
             problem: Some("a/".to_string()),
             force: false,
+            web: false,
+            language_id: None,
         };
         cmd.normalize();
         assert_eq!(
@@ -307,6 +315,8 @@ mod tests {
             Command::Submit {
                 problem: Some("a".to_string()),
                 force: false,
+                web: false,
+                language_id: None,
             }
         );
     }

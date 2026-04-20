@@ -18,9 +18,12 @@ fn main() {
 "#;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct GlobalConfig {
     pub editor: String,
     pub browser: String,
+    /// AtCoder language ID used by `acr submit`. Defaults to current Rust ID.
+    pub language_id: String,
 }
 
 impl Default for GlobalConfig {
@@ -28,6 +31,7 @@ impl Default for GlobalConfig {
         Self {
             editor: "vim".to_string(),
             browser: "xdg-open".to_string(),
+            language_id: "5054".to_string(),
         }
     }
 }
@@ -92,6 +96,7 @@ mod tests {
         let config = GlobalConfig::default();
         assert_eq!(config.editor, "vim");
         assert_eq!(config.browser, "xdg-open");
+        assert_eq!(config.language_id, "5054");
     }
 
     #[test]
@@ -102,12 +107,28 @@ mod tests {
         let config = GlobalConfig {
             editor: "nvim".to_string(),
             browser: "firefox".to_string(),
+            language_id: "9999".to_string(),
         };
         save_to(&path, &config).unwrap();
         let loaded = load_from(&path).unwrap();
 
         assert_eq!(loaded.editor, "nvim");
         assert_eq!(loaded.browser, "firefox");
+        assert_eq!(loaded.language_id, "9999");
+    }
+
+    #[test]
+    fn test_load_legacy_config_without_language_id() {
+        // Old config files predate the language_id field; loading should fall
+        // back to the default rather than erroring.
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("config.toml");
+        std::fs::write(&path, "editor = \"nvim\"\nbrowser = \"firefox\"\n").unwrap();
+
+        let loaded = load_from(&path).unwrap();
+        assert_eq!(loaded.editor, "nvim");
+        assert_eq!(loaded.browser, "firefox");
+        assert_eq!(loaded.language_id, "5054");
     }
 
     #[test]
