@@ -39,8 +39,7 @@ fn resolve_target(current: CurrentContext, args: &[String]) -> anyhow::Result<Op
             let contest_id = args.first().ok_or_else(|| {
                 anyhow::anyhow!("Specify a contest ID, or run from a contest or problem directory.")
             })?;
-            let contest_ctx = workspace::find_contest_dir_by_id(contest_id)
-                .with_context(|| format!("Contest '{}' not found", contest_id))?;
+            let contest_ctx = workspace::find_contest_dir_by_id(contest_id)?;
             resolve_from_contest(contest_ctx, &args[1..])
         }
     }
