@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/t-seki/acr/compare/v0.4.0...v0.4.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* **ci:** match release-please tag pattern and allow manual publish ([e5ae6d0](https://github.com/t-seki/acr/commit/e5ae6d0bce7dd9b74ad99b91a7060a669fde72ce))
+* **ci:** match release-please tag pattern and allow manual publish ([98ee720](https://github.com/t-seki/acr/commit/98ee720be1b4a1954066d4c79c9603ddeda9e69e))
+
 ## [0.4.0](https://github.com/t-seki/acr/compare/acr-cli-v0.3.4...acr-cli-v0.4.0) (2026-04-20)
 
 
