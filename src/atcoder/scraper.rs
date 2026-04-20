@@ -76,11 +76,7 @@ pub fn extract_task_list(html: &str) -> Vec<(String, String, String)> {
             if let Some(href) = link.value().attr("href") {
                 // href is like "/contests/{contest_id}/tasks/{task_screen_name}"
                 if let Some(task_screen_name) = href.rsplit('/').next() {
-                    tasks.push((
-                        alphabet,
-                        task_name,
-                        task_screen_name.to_string(),
-                    ));
+                    tasks.push((alphabet, task_name, task_screen_name.to_string()));
                 }
             }
         }
@@ -92,8 +88,7 @@ pub fn extract_task_list(html: &str) -> Vec<(String, String, String)> {
 /// Extract username from top page HTML (li a[href^="/users/"])
 pub fn extract_username(html: &str) -> Option<String> {
     let document = Html::parse_document(html);
-    let selector =
-        Selector::parse(r#"li a[href^="/users/"]"#).expect("valid selector");
+    let selector = Selector::parse(r#"li a[href^="/users/"]"#).expect("valid selector");
     document
         .select(&selector)
         .next()
@@ -253,8 +248,22 @@ mod tests {
         </body></html>"#;
         let tasks = extract_task_list(html);
         assert_eq!(tasks.len(), 2);
-        assert_eq!(tasks[0], ("A".to_string(), "積雪深差".to_string(), "abc001_1".to_string()));
-        assert_eq!(tasks[1], ("B".to_string(), "視程の通報".to_string(), "abc001_2".to_string()));
+        assert_eq!(
+            tasks[0],
+            (
+                "A".to_string(),
+                "積雪深差".to_string(),
+                "abc001_1".to_string()
+            )
+        );
+        assert_eq!(
+            tasks[1],
+            (
+                "B".to_string(),
+                "視程の通報".to_string(),
+                "abc001_2".to_string()
+            )
+        );
     }
 
     #[test]
@@ -280,8 +289,21 @@ mod tests {
         </body></html>"#;
         let tasks = extract_task_list(html);
         assert_eq!(tasks.len(), 2);
-        assert_eq!(tasks[0], ("001".to_string(), "Yokan Party（★4）".to_string(), "typical90_a".to_string()));
-        assert_eq!(tasks[1], ("002".to_string(), "Encyclopedia of Parentheses（★3）".to_string(), "typical90_b".to_string()));
+        assert_eq!(
+            tasks[0],
+            (
+                "001".to_string(),
+                "Yokan Party（★4）".to_string(),
+                "typical90_a".to_string()
+            )
+        );
+        assert_eq!(
+            tasks[1],
+            (
+                "002".to_string(),
+                "Encyclopedia of Parentheses（★3）".to_string(),
+                "typical90_b".to_string()
+            )
+        );
     }
-
 }

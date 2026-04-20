@@ -38,9 +38,7 @@ where
 
 /// Parse HH:MM (or HH:MM:SS) and resolve to the nearest date occurrence.
 /// Returns the resolved local datetime.
-pub fn resolve_target_time(
-    time_str: &str,
-) -> anyhow::Result<chrono::DateTime<chrono::Local>> {
+pub fn resolve_target_time(time_str: &str) -> anyhow::Result<chrono::DateTime<chrono::Local>> {
     let target_time = chrono::NaiveTime::parse_from_str(time_str, "%H:%M")
         .or_else(|_| chrono::NaiveTime::parse_from_str(time_str, "%H:%M:%S"))
         .map_err(|_| {
@@ -236,10 +234,7 @@ pub async fn setup_contest_workspace(
                 break;
             }
             let elapsed = start.elapsed().as_secs();
-            eprint!(
-                "\r\x1b[K  Retrying... ({}s / {}s)",
-                elapsed, max_retry_secs
-            );
+            eprint!("\r\x1b[K  Retrying... ({}s / {}s)", elapsed, max_retry_secs);
         }
     }
 
@@ -301,9 +296,7 @@ pub async fn execute(
     let current = workspace::detect_current_context();
     match current {
         CurrentContext::ProblemDir(_) | CurrentContext::ContestDir(_) => {
-            anyhow::bail!(
-                "Cannot create a new contest inside a problem or contest directory."
-            );
+            anyhow::bail!("Cannot create a new contest inside a problem or contest directory.");
         }
         CurrentContext::Outside => {}
     }

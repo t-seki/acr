@@ -62,7 +62,11 @@ pub async fn run_test(binary: &Path, test_case: &TestCase) -> TestResult {
         .spawn()
     {
         Ok(c) => c,
-        Err(e) => return TestResult::Re { stderr: e.to_string() },
+        Err(e) => {
+            return TestResult::Re {
+                stderr: e.to_string(),
+            };
+        }
     };
 
     if let Some(mut stdin) = child.stdin.take() {

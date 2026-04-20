@@ -76,8 +76,7 @@ pub fn detect_problem_dir_from(dir: &std::path::Path) -> anyhow::Result<ProblemC
     let cargo_toml_path = dir.join("Cargo.toml");
     let content = std::fs::read_to_string(&cargo_toml_path)
         .with_context(|| format!("No Cargo.toml found in {}", dir.display()))?;
-    let doc: toml::Value =
-        toml::from_str(&content).context("Failed to parse Cargo.toml")?;
+    let doc: toml::Value = toml::from_str(&content).context("Failed to parse Cargo.toml")?;
 
     let problem_url = doc
         .get("package")
@@ -332,11 +331,7 @@ problem_url = "https://atcoder.jp/contests/{contest_id}/tasks/{contest_id}_{p}"
         let dir = tempfile::tempdir().unwrap();
         let not_ws = dir.path().join("abc001");
         std::fs::create_dir_all(&not_ws).unwrap();
-        std::fs::write(
-            not_ws.join("Cargo.toml"),
-            "[package]\nname = \"test\"\n",
-        )
-        .unwrap();
+        std::fs::write(not_ws.join("Cargo.toml"), "[package]\nname = \"test\"\n").unwrap();
         assert!(find_contest_dir_by_id_from(dir.path(), "abc001").is_err());
     }
 
@@ -395,7 +390,10 @@ problem_url = "https://atcoder.jp/contests/{contest_id}/tasks/{contest_id}_{p}"
         let dir = tempfile::tempdir().unwrap();
         let ws = create_test_workspace(dir.path(), "abc001", &["c", "a", "b"]);
         let problems = list_contest_problems(&ws).unwrap();
-        let alphabets: Vec<&str> = problems.iter().map(|p| p.problem_alphabet.as_str()).collect();
+        let alphabets: Vec<&str> = problems
+            .iter()
+            .map(|p| p.problem_alphabet.as_str())
+            .collect();
         assert_eq!(alphabets, vec!["a", "b", "c"]);
     }
 

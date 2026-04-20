@@ -46,10 +46,10 @@ pub fn add_problem_to_workspace(
 
     // Update workspace Cargo.toml members
     let cargo_toml_path = workspace_dir.join("Cargo.toml");
-    let content = std::fs::read_to_string(&cargo_toml_path)
-        .context("Failed to read workspace Cargo.toml")?;
-    let mut doc: toml::Value = toml::from_str(&content)
-        .context("Failed to parse workspace Cargo.toml")?;
+    let content =
+        std::fs::read_to_string(&cargo_toml_path).context("Failed to read workspace Cargo.toml")?;
+    let mut doc: toml::Value =
+        toml::from_str(&content).context("Failed to parse workspace Cargo.toml")?;
 
     let new_member = problem.alphabet.to_lowercase();
     if let Some(members) = doc
@@ -62,8 +62,7 @@ pub fn add_problem_to_workspace(
     }
 
     let updated = toml::to_string(&doc).context("Failed to serialize workspace Cargo.toml")?;
-    std::fs::write(&cargo_toml_path, updated)
-        .context("Failed to write workspace Cargo.toml")?;
+    std::fs::write(&cargo_toml_path, updated).context("Failed to write workspace Cargo.toml")?;
 
     Ok(())
 }
@@ -178,8 +177,7 @@ fn create_problem_dir(
         .context("Failed to write problem Cargo.toml")?;
 
     // Write template to src/main.rs
-    std::fs::write(src_dir.join("main.rs"), template)
-        .context("Failed to write src/main.rs")?;
+    std::fs::write(src_dir.join("main.rs"), template).context("Failed to write src/main.rs")?;
 
     Ok(())
 }

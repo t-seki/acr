@@ -5,12 +5,7 @@ use crate::config;
 use crate::workspace;
 use crate::workspace::CurrentContext;
 
-pub async fn execute(
-    args: Vec<String>,
-    tests: bool,
-    code: bool,
-    deps: bool,
-) -> anyhow::Result<()> {
+pub async fn execute(args: Vec<String>, tests: bool, code: bool, deps: bool) -> anyhow::Result<()> {
     // Default to --tests if no flags given
     let do_tests = tests || (!code && !deps);
     let do_code = code;
@@ -33,10 +28,8 @@ pub async fn execute(
             } else {
                 args.iter()
                     .map(|p| {
-                        workspace::detect_problem_dir_from(
-                            &ctx.contest_dir.join(p.to_lowercase()),
-                        )
-                        .with_context(|| format!("Problem '{}' not found", p))
+                        workspace::detect_problem_dir_from(&ctx.contest_dir.join(p.to_lowercase()))
+                            .with_context(|| format!("Problem '{}' not found", p))
                     })
                     .collect::<anyhow::Result<Vec<_>>>()?
             }
@@ -53,10 +46,8 @@ pub async fn execute(
                 args[1..]
                     .iter()
                     .map(|p| {
-                        workspace::detect_problem_dir_from(
-                            &ctx.contest_dir.join(p.to_lowercase()),
-                        )
-                        .with_context(|| format!("Problem '{}' not found", p))
+                        workspace::detect_problem_dir_from(&ctx.contest_dir.join(p.to_lowercase()))
+                            .with_context(|| format!("Problem '{}' not found", p))
                     })
                     .collect::<anyhow::Result<Vec<_>>>()?
             }

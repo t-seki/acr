@@ -103,5 +103,4 @@ mod tests {
 
         delete_at(&path).unwrap();
     }
-
 }

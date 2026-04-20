@@ -156,7 +156,9 @@ impl Command {
                     strip_trailing_slash_mut(p);
                 }
             }
-            Command::Submissions { contest_id: Some(id) } => {
+            Command::Submissions {
+                contest_id: Some(id),
+            } => {
                 strip_trailing_slash_mut(id);
             }
             _ => {}
