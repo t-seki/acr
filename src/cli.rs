@@ -80,6 +80,21 @@ pub enum Command {
         args: Vec<String>,
     },
 
+    /// Reopen a contest workspace: launch editor and problem page in browser
+    ///
+    /// From a problem directory: reopens the current problem.
+    ///
+    /// From a contest directory: opens the contest in editor,
+    /// focusing on the first problem, or PROBLEM if provided.
+    ///
+    /// From outside: specify contest ID as first arg,
+    /// optionally followed by a problem name (e.g. abc123 a).
+    #[command(alias = "o")]
+    Open {
+        /// Problem name (in contest dir) or contest_id [problem] (outside)
+        args: Vec<String>,
+    },
+
     /// Run tests for the current problem
     #[command(alias = "t")]
     Test {
@@ -145,7 +160,7 @@ impl Command {
     /// Normalize CLI arguments: strip trailing slashes and expand path-style args.
     pub fn normalize(&mut self) {
         match self {
-            Command::View { args } | Command::Update { args, .. } => {
+            Command::View { args } | Command::Open { args } | Command::Update { args, .. } => {
                 *args = expand_slash_args(mem::take(args));
             }
             Command::Add { problems } => {
