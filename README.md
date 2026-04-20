@@ -4,7 +4,23 @@ AtCoder competitive programming CLI tool for Rust.
 
 ## Install
 
+Prebuilt binaries (fastest, no Rust toolchain required):
+
 ```bash
+# Linux / macOS
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/t-seki/acr/releases/latest/download/acr-cli-installer.sh | sh
+
+# Windows (PowerShell)
+irm https://github.com/t-seki/acr/releases/latest/download/acr-cli-installer.ps1 | iex
+```
+
+Via Cargo:
+
+```bash
+# If you already have cargo-binstall (fetches the prebuilt binary)
+cargo binstall acr-cli
+
+# From source (compiles locally)
 cargo install acr-cli
 ```
 
