@@ -124,6 +124,25 @@ fn main() {
 
 Edit this file to customize the boilerplate generated for each problem.
 
+### Sharing templates
+
+Install someone else's template (or your own) without editing the file by
+hand:
+
+```bash
+acr template add https://gist.github.com/someone/abcdef1234
+acr template add https://github.com/someone/dotfiles/blob/main/atcoder.rs
+acr template add ./my_template.rs
+acr template show    # print the current template
+acr template reset   # restore the built-in default
+```
+
+`add` and `reset` move the existing file aside to `~/.config/acr/template.rs.bak`
+before writing, so you can always roll back with `mv template.rs.bak template.rs`.
+
+GitHub "blob" URLs and Gist pretty URLs are rewritten to their raw-content
+equivalents automatically; other `http(s)://` URLs are fetched as-is.
+
 ## Releasing (maintainers)
 
 Releases are automated with [release-please](https://github.com/googleapis/release-please-action) and crates.io [Trusted Publishing](https://crates.io/docs/trusted-publishing):

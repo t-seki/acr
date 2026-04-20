@@ -44,5 +44,6 @@ async fn main() -> anyhow::Result<()> {
         } => commands::virtual_contest::execute(contest_id, problems, at).await,
         Command::Submissions { contest_id } => commands::submissions::execute(contest_id),
         Command::Config { key, value } => commands::config::execute(key, value),
+        Command::Template { action } => commands::template::execute(action).await,
     }
 }
