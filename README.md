@@ -138,7 +138,8 @@ acr template reset   # restore the built-in default
 ```
 
 `add` and `reset` move the existing file aside to `~/.config/acr/template.rs.bak`
-before writing, so you can always roll back with `mv template.rs.bak template.rs`.
+before writing, so you can always roll back with
+`mv ~/.config/acr/template.rs.bak ~/.config/acr/template.rs`.
 
 GitHub "blob" URLs and Gist pretty URLs are rewritten to their raw-content
 equivalents automatically; other `http(s)://` URLs are fetched as-is.
