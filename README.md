@@ -36,6 +36,8 @@ Demo media (maintainer step — fill in after recording):
   toolchain required.
 - **Start-time wait**: `acr new abc400 --at 21:00` blocks until the contest
   opens, then creates the workspace the moment the tasks appear.
+  `acr virtual abc300` uses the same mechanic for virtual contests — pick
+  any past contest and start a timed run of your own.
 - **Native editor + browser integration**: `acr open`, `acr view`, and
   `acr new` launch your configured editor and browser together, shell flags
   and all (`"code --new-window"`, `"firefox --new-window"`, ...).
@@ -111,6 +113,9 @@ cargo install acr-cli
 ```bash
 acr new abc001          # Create contest workspace and open editor (alias: n)
 acr new abc001 --at 21:00  # Wait until 21:00, then create workspace
+acr virtual abc300      # Start a virtual contest (starts ~2 min from now)
+acr virtual abc300 --at 21:00  # Virtual contest starting at 21:00
+acr virtual abc300 a b  # Only set up problems A and B as a virtual
 acr add e               # Add a problem to the workspace
 acr open abc001         # Reopen existing workspace in editor + browser (alias: o)
 acr open abc001 a       # Reopen focused on problem A
