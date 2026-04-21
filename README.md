@@ -90,12 +90,14 @@ cargo install acr-cli
 
 3. **Log in to AtCoder** — `acr login` opens the AtCoder login page in
    your browser and waits for you to paste the `REVEL_SESSION` cookie
-   value. Grab it from DevTools → Application → Cookies → atcoder.jp.
-   Cookies typically last around a month; re-run when they expire.
+   value. Grab it from DevTools → Application → Cookies → atcoder.jp,
+   then copy the `REVEL_SESSION` row's value. Cookies typically last
+   around a month; re-run when they expire.
 
 > Why paste a cookie manually? AtCoder's Cloudflare Turnstile blocks
-> automated form-login for CLI tools. Copying the cookie once via
-> DevTools → Application → Cookies → `REVEL_SESSION` is a one-minute step.
+> automated form-login for CLI tools. Copying the `REVEL_SESSION` cookie
+> once via DevTools → Application → Cookies → atcoder.jp is a one-minute
+> step.
 
 ## Usage
 
