@@ -6,6 +6,7 @@ pub mod open;
 pub mod session;
 pub mod submissions;
 pub mod submit;
+pub mod template;
 pub mod test;
 pub mod update;
 pub mod view;

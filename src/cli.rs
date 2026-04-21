@@ -136,6 +136,25 @@ pub enum Command {
         /// Configuration value
         value: Option<String>,
     },
+
+    /// Manage the source template used by `acr new` / `acr add`
+    Template {
+        #[command(subcommand)]
+        action: TemplateAction,
+    },
+}
+
+#[derive(Subcommand, Debug, PartialEq)]
+pub enum TemplateAction {
+    /// Install a template from a URL or local path
+    Add {
+        /// URL (raw file, gist, or GitHub blob) or local file path
+        source: String,
+    },
+    /// Print the current template to stdout
+    Show,
+    /// Reset to the built-in default template
+    Reset,
 }
 
 fn strip_trailing_slash_mut(s: &mut String) {
