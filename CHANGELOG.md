@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0](https://github.com/t-seki/acr/compare/v0.5.0...v0.6.0) (2026-04-21)
+
+
+### Features
+
+* **init:** re-runnable init with platform-aware browser default ([#92](https://github.com/t-seki/acr/issues/92)) ([2727146](https://github.com/t-seki/acr/commit/2727146c19e6b0a8e9b9e30c2aac6b028541b1a3))
+* **template:** add `acr template` subcommand ([#94](https://github.com/t-seki/acr/issues/94)) ([aed84c6](https://github.com/t-seki/acr/commit/aed84c6534944d061ba633aeed163bcdf0d1b40d))
+
 ## [0.5.0](https://github.com/t-seki/acr/compare/v0.4.4...v0.5.0) (2026-04-20)
 
 
