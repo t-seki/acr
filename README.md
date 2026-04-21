@@ -1,6 +1,55 @@
 # acr
 
-AtCoder competitive programming CLI tool for Rust.
+AtCoder competitive programming CLI tool for Rust. One command sets up the
+Cargo workspace, fetches sample inputs, drops you in your editor with the
+problem page already open, and ships your solution.
+
+<!--
+Demo media (maintainer step — fill in after recording):
+
+1) Full-desktop screencast (preferred, 30-60s)
+   - Record editor + browser + terminal in one take.
+   - macOS:   QuickTime Player / Kap
+   - Linux:   peek / kazam / OBS
+   - Windows: Xbox Game Bar / ShareX
+   - Save as MP4 or WebM; drag into a GitHub issue/PR comment to upload.
+     GitHub returns a `https://user-images.githubusercontent.com/.../*.mp4`
+     URL. Paste it into the <video> src below and uncomment the tag.
+
+2) Optional still shot (editor + browser side-by-side) under docs/ so
+   viewers with video autoplay disabled still see something.
+
+3) Optional asciinema cast for terminal-only moments (see the Usage
+   section).
+-->
+
+<!-- Uncomment and fill in once recorded:
+<video src="REPLACE_ME.mp4" autoplay muted loop playsinline width="720"></video>
+-->
+
+## Why acr?
+
+- **One-shot setup**: `acr new abc400` creates a Cargo workspace, fetches
+  every sample input, and drops you in your editor focused on problem A.
+- **Prebuilt binaries for macOS / Linux / Windows**: install in seconds via
+  shell script, PowerShell, Homebrew tap, or `cargo binstall` — no Rust
+  toolchain required.
+- **Start-time wait**: `acr new abc400 --at 21:00` blocks until the contest
+  opens, then creates the workspace the moment the tasks appear.
+- **Native editor + browser integration**: `acr open`, `acr view`, and
+  `acr new` launch your configured editor and browser together, shell flags
+  and all (`"code --new-window"`, `"firefox --new-window"`, ...).
+- **Judge-parity dependencies**: generated `Cargo.toml` pins the exact crates
+  and versions that AtCoder's judge uses, so "compiles locally" means
+  "compiles on the judge".
+- **Portable, shareable templates**: `~/.config/acr/template.rs` is your
+  snippet library. `acr template add <url>` pulls in anyone's Gist or repo
+  file, with an automatic backup for safe experimentation.
+
+> Note: AtCoder recently introduced Cloudflare Turnstile, which makes
+> CLI-only login and submission infeasible for any tool right now. `acr`
+> uses a pasted `REVEL_SESSION` cookie for reads and hands the final submit
+> off to your browser.
 
 ## Install
 
@@ -29,12 +78,33 @@ cargo install acr-cli
 
 ## Setup
 
-```bash
-acr init      # Interactive setup (editor, browser, template)
-acr login     # Login to AtCoder
-```
+1. **Install** — see above. Verify with `acr --version`.
+2. **Initialize the config** — `acr init` walks you through:
+   - Editor command (e.g. `vim`, `nvim`, `code --new-window`)
+   - Browser command (defaults to `open` on macOS, `explorer` on Windows,
+     `xdg-open` elsewhere; override if you want flags like `--new-window`)
+
+   It also seeds a default source template at `~/.config/acr/template.rs`.
+   Re-run `acr init` anytime — current values are offered as prompt
+   defaults, so pressing Enter keeps them.
+
+3. **Log in to AtCoder** — `acr login` opens the AtCoder login page in
+   your browser and waits for you to paste the `REVEL_SESSION` cookie
+   value. Grab it from DevTools → Application → Cookies → atcoder.jp.
+   Cookies typically last around a month; re-run when they expire.
+
+> Why paste a cookie manually? AtCoder's Cloudflare Turnstile blocks
+> automated form-login for CLI tools. Copying the cookie once via
+> DevTools → Application → Cookies → `REVEL_SESSION` is a one-minute step.
 
 ## Usage
+
+<!-- asciinema cast for terminal-only moments (test / update / submit).
+     Record with `asciinema rec demo.cast --idle-time-limit=1`, upload
+     via `asciinema upload demo.cast`, and uncomment the line below with
+     the returned URL. -->
+<!-- [![asciicast](https://asciinema.org/a/REPLACE_ME.svg)](https://asciinema.org/a/REPLACE_ME) -->
+
 
 ```bash
 acr new abc001          # Create contest workspace and open editor (alias: n)
@@ -83,6 +153,33 @@ acr config browser open # Change browser (default: xdg-open)
 acr config browser "google-chrome --new-window"  # Browser may include flags
 acr config browser '"/mnt/c/Program Files/Google/Chrome/Application/chrome.exe" --new-window'  # WSL2 + Chrome
 ```
+
+## Libraries
+
+Every problem `Cargo.toml` that `acr new` generates pins the **same crate set
+and versions that AtCoder's judge provides**. Commonly reached-for crates
+work out of the box:
+
+```rust
+use proconio::input;
+use ac_library::ModInt998244353 as Mint;
+
+fn main() {
+    input! { n: usize, a: [Mint; n] }
+    // ...
+}
+```
+
+The full list is defined in `src/workspace/generator.rs` and includes
+`ac-library-rs`, `proconio`, `itertools`, `num`, `nalgebra`, `ndarray`,
+`petgraph`, `rustc-hash`, and others.
+
+When the judge updates its crate set, `acr update -d` refreshes the pinned
+dependencies for an existing workspace.
+
+> Adding a crate that is not in the judge's list is possible locally (edit
+> `Cargo.toml` directly), but **the judge will fail to compile the submission**
+> and `acr update -d` will overwrite your local edits.
 
 ## Workspace Structure
 
