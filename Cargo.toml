@@ -36,7 +36,7 @@ thiserror = "2"
 
 # terminal
 colored = "2"
-indicatif = "0.17"
+indicatif = "0.18"
 
 # clipboard
 arboard = "3"
