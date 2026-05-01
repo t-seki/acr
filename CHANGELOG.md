@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.1](https://github.com/t-seki/acr/compare/v0.6.0...v0.6.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* **deps:** update http-stack ([#110](https://github.com/t-seki/acr/issues/110)) ([94813cf](https://github.com/t-seki/acr/commit/94813cfc3f54a1bf0101ac558030c127ee8dc0c9))
+* **deps:** update rust crate colored to v3 ([#111](https://github.com/t-seki/acr/issues/111)) ([215eb12](https://github.com/t-seki/acr/commit/215eb1262f20d6afe5e70b53c385b4eef52d5ef7))
+* **deps:** update rust crate dirs to v6 ([#112](https://github.com/t-seki/acr/issues/112)) ([d2bf8ce](https://github.com/t-seki/acr/commit/d2bf8ced23e05ba0e92ac05019c489a01c2b51e7))
+* **deps:** update rust crate indicatif to 0.18 ([#106](https://github.com/t-seki/acr/issues/106)) ([5c74726](https://github.com/t-seki/acr/commit/5c747267f9402887aa2f85618fc17dcdd57a870e))
+* **deps:** update rust crate toml to 0.9 ([#109](https://github.com/t-seki/acr/issues/109)) ([d97ff58](https://github.com/t-seki/acr/commit/d97ff585a93343835efbd155778b0ac7501f27fe))
+* **deps:** update rust crate toml to v1 ([#113](https://github.com/t-seki/acr/issues/113)) ([2d4e04c](https://github.com/t-seki/acr/commit/2d4e04c824b6fe4ba14e98f9889e2b6a6dee6b70))
+
 ## [0.6.0](https://github.com/t-seki/acr/compare/v0.5.0...v0.6.0) (2026-04-21)
 
 
