@@ -42,7 +42,7 @@ indicatif = "0.18"
 arboard = "3"
 
 # utility
-dirs = "5"
+dirs = "6"
 chrono = "0.4"
 shlex = "1"
 
