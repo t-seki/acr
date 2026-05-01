@@ -1,0 +1,56 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices"
+  ],
+  "timezone": "Asia/Tokyo",
+  "schedule": [
+    "before 9am on monday"
+  ],
+  "labels": ["dependencies"],
+  "ignorePaths": [
+    ".github/workflows/release.yml"
+  ],
+  "packageRules": [
+    {
+      "description": "Automerge patch / pin / digest updates after CI passes",
+      "matchUpdateTypes": ["patch", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "tokio family",
+      "groupName": "tokio",
+      "matchPackageNames": ["tokio", "tokio-*"]
+    },
+    {
+      "description": "serde family",
+      "groupName": "serde",
+      "matchPackageNames": ["serde", "serde_json", "serde_derive"]
+    },
+    {
+      "description": "clap family",
+      "groupName": "clap",
+      "matchPackageNames": ["clap", "clap_*"]
+    },
+    {
+      "description": "HTTP / scraping crates",
+      "groupName": "http-stack",
+      "matchPackageNames": ["reqwest", "scraper"]
+    },
+    {
+      "description": "Error handling crates",
+      "groupName": "error-handling",
+      "matchPackageNames": ["anyhow", "thiserror"]
+    },
+    {
+      "description": "Terminal UI crates",
+      "groupName": "terminal-ui",
+      "matchPackageNames": ["colored", "indicatif"]
+    },
+    {
+      "description": "GitHub Actions",
+      "groupName": "github-actions",
+      "matchManagers": ["github-actions"]
+    }
+  ]
+}
