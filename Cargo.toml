@@ -35,7 +35,7 @@ anyhow = "1"
 thiserror = "2"
 
 # terminal
-colored = "2"
+colored = "3"
 indicatif = "0.18"
 
 # clipboard
