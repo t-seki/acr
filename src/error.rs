@@ -17,6 +17,9 @@ pub enum AcrError {
     #[error("Config not found. Run `acr init` first")]
     ConfigNotFound,
 
+    #[error("acr is not initialized in this directory. Run `acr init` first")]
+    NotInitialized,
+
     #[error("Contest directory already exists: {0}")]
     ContestAlreadyExists(String),
 }

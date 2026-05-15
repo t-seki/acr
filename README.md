@@ -81,12 +81,19 @@ cargo install acr-cli
 ## Setup
 
 1. **Install** — see above. Verify with `acr --version`.
-2. **Initialize the config** — `acr init` walks you through:
+2. **Initialize the config** — Run `acr init` once from your working root
+   (e.g. `~/dev/atcoder-rs/`). It walks you through:
    - Editor command (e.g. `vim`, `nvim`, `code --new-window`)
    - Browser command (defaults to `open` on macOS, `explorer` on Windows,
      `xdg-open` elsewhere; override if you want flags like `--new-window`)
 
-   It also seeds a default source template at `~/.config/acr/template.rs`.
+   It also seeds a default source template at `~/.config/acr/template.rs`
+   and creates a `.acr` marker file in the current directory. Commands like
+   `acr new` and `acr update` require this marker to be present somewhere
+   in the directory tree (they search upward through ancestors), so you
+   only need to run `acr init` once at the root — category subfolders like
+   `~/dev/atcoder-rs/awc/` are automatically covered.
+
    Re-run `acr init` anytime — current values are offered as prompt
    defaults, so pressing Enter keeps them.
 

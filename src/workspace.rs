@@ -5,6 +5,11 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 
+use crate::error::AcrError;
+
+/// `acr init` が作成するマーカーファイル名。祖先方向に探索して init 済みツリーを検証する。
+pub const ACR_MARKER_FILE: &str = ".acr";
+
 /// Context for the current problem directory.
 #[derive(Debug)]
 pub struct ProblemContext {
@@ -136,6 +141,19 @@ pub fn list_contest_problems(contest_dir: &std::path::Path) -> anyhow::Result<Ve
     Ok(problems)
 }
 
+/// cwd から祖先方向に `.acr` マーカーを探索し、`acr init` 済みツリー内かを検証する。
+/// カテゴリ別サブフォルダ（例: `awc/`）からの操作も、ルートに `.acr` があれば許可する。
+pub fn ensure_acr_initialized(base_dir: &std::path::Path) -> anyhow::Result<()> {
+    let mut dir = Some(base_dir);
+    while let Some(d) = dir {
+        if d.join(ACR_MARKER_FILE).exists() {
+            return Ok(());
+        }
+        dir = d.parent();
+    }
+    Err(AcrError::NotInitialized.into())
+}
+
 /// Find a contest directory by contest ID, searching from the current working directory.
 pub fn find_contest_dir_by_id(contest_id: &str) -> anyhow::Result<ContestContext> {
     let cwd = std::env::current_dir().context("Failed to get current directory")?;
@@ -143,10 +161,12 @@ pub fn find_contest_dir_by_id(contest_id: &str) -> anyhow::Result<ContestContext
 }
 
 /// Find a contest directory by contest ID, searching from a given base directory.
+/// Requires the directory tree to be `acr init` initialized (`.acr` marker present in an ancestor).
 pub fn find_contest_dir_by_id_from(
     base_dir: &std::path::Path,
     contest_id: &str,
 ) -> anyhow::Result<ContestContext> {
+    ensure_acr_initialized(base_dir)?;
     let candidate = base_dir.join(contest_id);
     let cargo_toml = candidate.join("Cargo.toml");
     let content = std::fs::read_to_string(&cargo_toml)
@@ -262,6 +282,7 @@ problem_url = "https://atcoder.jp/contests/abc001/tasks/abc001_a"
     ) -> PathBuf {
         let ws = base.join(contest_id);
         std::fs::create_dir_all(&ws).unwrap();
+        std::fs::write(base.join(super::ACR_MARKER_FILE), "").unwrap();
         let members: Vec<String> = problems.iter().map(|p| format!("\"{}\"", p)).collect();
         std::fs::write(
             ws.join("Cargo.toml"),
@@ -323,12 +344,14 @@ problem_url = "https://atcoder.jp/contests/{contest_id}/tasks/{contest_id}_{p}"
     #[test]
     fn test_find_contest_dir_by_id_from_not_found() {
         let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join(super::ACR_MARKER_FILE), "").unwrap();
         assert!(find_contest_dir_by_id_from(dir.path(), "abc999").is_err());
     }
 
     #[test]
     fn test_find_contest_dir_by_id_from_not_workspace() {
         let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join(super::ACR_MARKER_FILE), "").unwrap();
         let not_ws = dir.path().join("abc001");
         std::fs::create_dir_all(&not_ws).unwrap();
         std::fs::write(not_ws.join("Cargo.toml"), "[package]\nname = \"test\"\n").unwrap();
@@ -409,5 +432,42 @@ problem_url = "https://atcoder.jp/contests/{contest_id}/tasks/{contest_id}_{p}"
         .unwrap();
         let problems = list_contest_problems(&ws).unwrap();
         assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn test_find_contest_dir_by_id_from_no_marker() {
+        let dir = tempfile::tempdir().unwrap();
+        let ws = dir.path().join("abc001");
+        std::fs::create_dir_all(&ws).unwrap();
+        std::fs::write(
+            ws.join("Cargo.toml"),
+            "[workspace]\nmembers = [\"a\"]\nresolver = \"2\"\n",
+        )
+        .unwrap();
+        let err = find_contest_dir_by_id_from(dir.path(), "abc001").unwrap_err();
+        assert!(err.to_string().contains("acr init"));
+    }
+
+    #[test]
+    fn test_ensure_acr_initialized_present() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join(ACR_MARKER_FILE), "").unwrap();
+        assert!(ensure_acr_initialized(dir.path()).is_ok());
+    }
+
+    #[test]
+    fn test_ensure_acr_initialized_absent() {
+        let dir = tempfile::tempdir().unwrap();
+        let err = ensure_acr_initialized(dir.path()).unwrap_err();
+        assert!(err.to_string().contains("acr init"));
+    }
+
+    #[test]
+    fn test_ensure_acr_initialized_ancestor_walk() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join(ACR_MARKER_FILE), "").unwrap();
+        let child = dir.path().join("awc");
+        std::fs::create_dir_all(&child).unwrap();
+        assert!(ensure_acr_initialized(&child).is_ok());
     }
 }

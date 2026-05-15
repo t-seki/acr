@@ -54,6 +54,18 @@ pub fn execute() -> anyhow::Result<()> {
         println!("Created .gitignore");
     }
 
+    // .acr (workspace marker)
+    let marker_path = std::env::current_dir()?.join(crate::workspace::ACR_MARKER_FILE);
+    if marker_path.exists() {
+        println!(".acr already exists, skipping.");
+    } else {
+        std::fs::write(
+            &marker_path,
+            "# acr workspace marker - created by `acr init`. Do not delete.\n",
+        )?;
+        println!("Created .acr");
+    }
+
     println!("Initialization complete!");
     Ok(())
 }

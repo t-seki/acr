@@ -18,6 +18,8 @@ pub async fn execute(
         CurrentContext::Outside => {}
     }
 
+    workspace::ensure_acr_initialized(&std::env::current_dir()?)?;
+
     // Determine start time
     let target = match &at {
         Some(time_str) => super::new::resolve_target_time(time_str)?,
