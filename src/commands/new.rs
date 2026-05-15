@@ -279,6 +279,8 @@ pub async fn execute(
         CurrentContext::Outside => {}
     }
 
+    workspace::ensure_acr_initialized(&std::env::current_dir()?)?;
+
     // --at: wait until the specified time
     if let Some(ref time_str) = at {
         let target = resolve_target_time(time_str)?;
