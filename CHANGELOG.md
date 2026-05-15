@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/t-seki/acr/compare/v0.6.1...v0.7.0) (2026-05-15)
+
+
+### Features
+
+* **workspace:** validate acr init via .acr marker before Outside-context ops ([#118](https://github.com/t-seki/acr/issues/118)) ([6f61914](https://github.com/t-seki/acr/commit/6f61914bdba4507a1bcb804b100c3f0b7dfcc3e6))
+
 ## [0.6.1](https://github.com/t-seki/acr/compare/v0.6.0...v0.6.1) (2026-05-01)
 
 
