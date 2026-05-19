@@ -44,7 +44,7 @@ arboard = "3"
 # utility
 dirs = "6"
 chrono = "0.4"
-shlex = "1"
+shlex = "2"
 
 [dev-dependencies]
 tempfile = "=3.27.0"
