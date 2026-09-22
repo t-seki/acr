@@ -2,6 +2,11 @@
 
 [English](README.md) | 日本語
 
+[![CI](https://github.com/t-seki/acr/actions/workflows/ci.yml/badge.svg)](https://github.com/t-seki/acr/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/acr-cli.svg)](https://crates.io/crates/acr-cli)
+[![downloads](https://img.shields.io/crates/d/acr-cli.svg)](https://crates.io/crates/acr-cli)
+[![license](https://img.shields.io/crates/l/acr-cli.svg)](LICENSE)
+
 Rust 向け AtCoder 競技プログラミング CLI ツール。コマンド一発で Cargo
 ワークスペースのセットアップとサンプル入力の取得を行い、問題ページを開いた
 状態でエディタを起動し、解答の提出までこなします。

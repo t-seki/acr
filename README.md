@@ -2,6 +2,11 @@
 
 English | [日本語](README.ja.md)
 
+[![CI](https://github.com/t-seki/acr/actions/workflows/ci.yml/badge.svg)](https://github.com/t-seki/acr/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/acr-cli.svg)](https://crates.io/crates/acr-cli)
+[![downloads](https://img.shields.io/crates/d/acr-cli.svg)](https://crates.io/crates/acr-cli)
+[![license](https://img.shields.io/crates/l/acr-cli.svg)](LICENSE)
+
 AtCoder competitive programming CLI tool for Rust. One command sets up the
 Cargo workspace, fetches sample inputs, drops you in your editor with the
 problem page already open, and ships your solution.
