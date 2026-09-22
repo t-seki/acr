@@ -1,0 +1,33 @@
+name: audit
+
+# The `advisories` check can change result without any dependency change,
+# because the RUSTSEC database itself moves. Re-run it on a schedule on top of
+# the per-PR `deny` job in ci.yml.
+on:
+  schedule:
+    # GitHub Actions cron is always UTC, including the day-of-week field.
+    #
+    # Renovate is configured with `timezone: Asia/Tokyo` and
+    # `schedule: ["before 9am on monday"]`, i.e. a window of
+    # Mon 00:00-09:00 JST == Sun 15:00 UTC - Mon 00:00 UTC.
+    #
+    # We want the vulnerability signal to land before Renovate starts opening
+    # update PRs, so this must fire strictly before Sun 15:00 UTC.
+    #
+    # `0 12 * * 0` == Sun 12:00 UTC == Sun 21:00 JST, ~3h of margin.
+    # Note the day-of-week is Sunday (0) in UTC even though it is Sunday
+    # evening in JST; do not "fix" this to Monday.
+    - cron: '0 12 * * 0'
+  workflow_dispatch: {}
+
+jobs:
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          # The action defaults `arguments` to `--all-features`, which would
+          # override `[graph] all-features = false` in deny.toml. Clear it so
+          # CI checks the same dependency graph the config describes.
+          arguments: ""
