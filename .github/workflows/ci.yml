@@ -12,6 +12,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
+          toolchain: stable
           components: rustfmt
       - run: cargo fmt --check
 
@@ -21,6 +22,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
+          toolchain: stable
           components: clippy
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - run: cargo clippy --locked --all-targets -- -D warnings
@@ -34,8 +36,28 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - run: cargo test --locked
+
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # Same digest as the other jobs, so Renovate keeps all four in step. The
+      # pin itself comes from the action's `stable` branch, but what this job
+      # installs is the `toolchain` input below -- not stable.
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable -- the pinned ref, not what this job installs
+        with:
+          # Quoted on purpose: bare 1.88 is a YAML float, and a future 1.90
+          # would silently become 1.9.
+          toolchain: "1.88"
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      # `rust-version` in Cargo.toml already keeps resolver v3 from pulling in
+      # dependencies that need a newer compiler. What this job adds is catching
+      # acr's own code reaching for a language feature newer than 1.88.
+      - run: cargo check --locked
 
   deny:
     runs-on: ubuntu-latest
