@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.1](https://github.com/t-seki/acr/compare/v0.7.0...v0.7.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **deps:** update rust crate dirs to v7 ([#145](https://github.com/t-seki/acr/issues/145)) ([80c3d9d](https://github.com/t-seki/acr/commit/80c3d9dcc1d57b3d74721cdeeb236859f03b2fd7))
+* **deps:** update rust crate scraper to 0.27 ([#120](https://github.com/t-seki/acr/issues/120)) ([926db5e](https://github.com/t-seki/acr/commit/926db5e5d1c2b27cdba7e622fd2333aaee4f4382))
+* **deps:** update rust crate shlex to v2 ([#121](https://github.com/t-seki/acr/issues/121)) ([310a431](https://github.com/t-seki/acr/commit/310a4319abacae61069a56fd6b658b3e8e31d8fe))
+
 ## [0.7.0](https://github.com/t-seki/acr/compare/v0.6.1...v0.7.0) (2026-05-15)
 
 
