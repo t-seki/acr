@@ -2,6 +2,7 @@
 name = "acr-cli"
 version = "0.7.1"
 edition = "2024"
+rust-version = "1.88"
 description = "A CLI tool for AtCoder competitive programming in Rust"
 license = "MIT"
 homepage = "https://github.com/t-seki/acr"
