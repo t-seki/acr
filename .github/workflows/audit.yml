@@ -27,7 +27,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
         with:
-          # The action defaults `arguments` to `--all-features`, which would
-          # override `[graph] all-features = false` in deny.toml. Clear it so
-          # CI checks the same dependency graph the config describes.
-          arguments: ""
+          # `arguments` is a single interpolated slot in the action's `args:`,
+          # so whatever is set here REPLACES the action default of
+          # `--all-features`, which would otherwise override
+          # `[graph] all-features = false` in deny.toml. Keeping that default
+          # out preserves the dependency graph the config describes, while
+          # `--locked` makes cargo-deny audit the committed Cargo.lock rather
+          # than a graph it re-resolved. `--locked` must stay ahead of the
+          # `check` subcommand: it is a top-level cargo-deny option, and the
+          # action expands `arguments` before `command`.
+          arguments: "--locked"
