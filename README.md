@@ -262,6 +262,56 @@ before writing, so you can always roll back with
 GitHub "blob" URLs and Gist pretty URLs are rewritten to their raw-content
 equivalents automatically; other `http(s)://` URLs are fetched as-is.
 
+## Troubleshooting
+
+### `std` macros show `{unknown}` types in VS Code
+
+**Symptom:** inlay hints and hover in VS Code report `{unknown}` for every
+expression that goes through a `std` macro — `vec![0; n]`, `println!`,
+`format!` — while the rest of the same file resolves normally.
+
+**How to confirm:** this is an editor-only problem, so check that the
+compiler and the editor disagree:
+
+- `cargo check` and `cargo clippy` pass without errors.
+- Non-macro `std` items still resolve — hovering `Vec::new()` shows
+  `Vec<i32>`, and types coming from `proconio` are correct.
+
+If both hold, rust-analyzer is reading a `rust-src` that does not match the
+toolchain your workspace is pinned to. acr's workspaces target the AtCoder
+judge environment, so pinning the toolchain to match it with
+`rustup override set 1.89.0` is a natural thing to do — but the VS Code
+rust-analyzer extension auto-updates to the latest release, and the two
+drift apart.
+
+**Fix:** point rust-analyzer at the `std` sources that ship with your stable
+toolchain. Get the path with:
+
+```bash
+rustup run stable rustc --print sysroot
+```
+
+Append `/lib/rustlib/src/rust/library` to the output and set it:
+
+```json
+{
+  "rust-analyzer.cargo.sysrootSrc": "/home/you/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library"
+}
+```
+
+If that directory does not exist, install the sources with
+`rustup component add rust-src --toolchain stable`.
+
+**Where to put the setting:** use VS Code's Remote or Machine settings —
+anything that does not depend on the folder you open. acr opens a new folder
+per contest, so putting it in a workspace-level `.vscode/settings.json`
+means recreating it for every contest.
+
+**Side effect:** completion now comes from stable's `std`, so it may suggest
+APIs that the pinned toolchain does not have yet. `cargo check` still
+compiles against the pinned toolchain and reports them, so you find out
+before submitting.
+
 ## Releasing (maintainers)
 
 Releases are automated with [release-please](https://github.com/googleapis/release-please-action) and crates.io [Trusted Publishing](https://crates.io/docs/trusted-publishing):
