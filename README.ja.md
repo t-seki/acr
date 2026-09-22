@@ -269,6 +269,55 @@ acr template reset   # 組み込みのデフォルトに戻す
 GitHub の "blob" URL と Gist の通常 URL は自動的に raw コンテンツの URL に
 書き換えられます。それ以外の `http(s)://` URL はそのまま取得されます。
 
+## トラブルシューティング
+
+### VS Code で `std` マクロの型が `{unknown}` になる
+
+**症状:** VS Code のインレイヒントやホバーで、`vec![0; n]`、`println!`、
+`format!` など `std` のマクロを経由する式の型だけが `{unknown}` と
+表示されます。同じファイルの他の部分は正常に解決されています。
+
+**確認方法:** エディタ表示だけの問題なので、コンパイラとエディタで結果が
+食い違っていることを確認します:
+
+- `cargo check` と `cargo clippy` がエラーなく通る。
+- マクロを経由しない `std` の要素は解決できている — `Vec::new()` に
+  ホバーすると `Vec<i32>` と表示され、`proconio` 由来の型も正しい。
+
+両方あてはまるなら、rust-analyzer が読んでいる `rust-src` がワークスペース
+で固定している toolchain と噛み合っていません。acr のワークスペースは
+AtCoder の判定環境に合わせてあるため、`rustup override set 1.89.0` の
+ように toolchain も判定環境に固定する運用は自然に起こりますが、VS Code の
+rust-analyzer 拡張は自動更新で常に最新になるため、両者がずれます。
+
+**対処:** rust-analyzer が読む `std` のソースだけを stable toolchain の
+ものに向けます。パスは次のコマンドで取得できます:
+
+```bash
+rustup run stable rustc --print sysroot
+```
+
+出力に `/lib/rustlib/src/rust/library` を足したものを設定します:
+
+```json
+{
+  "rust-analyzer.cargo.sysrootSrc": "/home/you/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library"
+}
+```
+
+このディレクトリが存在しない場合は
+`rustup component add rust-src --toolchain stable` でソースを入れてください。
+
+**設定の置き場所:** VS Code の Remote 設定や Machine 設定など、開くフォルダ
+に依存しない階層に置いてください。acr はコンテストごとに新しいフォルダを
+開くため、ワークスペースの `.vscode/settings.json` に書くとコンテストの
+たびに作り直すことになります。
+
+**副作用:** 補完が stable の `std` から出るようになるため、固定した
+toolchain にはまだ存在しない API が候補に現れることがあります。
+`cargo check` は固定した toolchain でコンパイルするのでそれらを検出でき、
+提出前に気付けます。
+
 ## リリース (メンテナ向け)
 
 リリースは [release-please](https://github.com/googleapis/release-please-action) と crates.io の [Trusted Publishing](https://crates.io/docs/trusted-publishing) で自動化されています:
