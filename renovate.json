@@ -1,21 +1,15 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:best-practices"
-  ],
-  "timezone": "Asia/Tokyo",
-  "schedule": [
-    "before 9am on monday"
-  ],
-  "labels": ["dependencies"],
+  "extends": ["github>t-seki/renovate-config"],
   "ignorePaths": [
     ".github/workflows/release.yml"
   ],
   "packageRules": [
     {
-      "description": "Automerge patch / pin / digest updates after CI passes",
-      "matchUpdateTypes": ["patch", "pin", "digest"],
-      "automerge": true
+      "description": "全依存を chore(deps): に固定。runtime 依存の fix(deps): が自動マージされて release-please のリリースが毎週走るのを防ぐ",
+      "matchPackageNames": ["*"],
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "deps"
     },
     {
       "description": "tokio family",
