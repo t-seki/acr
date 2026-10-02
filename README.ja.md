@@ -11,7 +11,7 @@ Rust 向け AtCoder 競技プログラミング CLI ツール。コマンド一�
 ワークスペースのセットアップとサンプル入力の取得を行い、問題ページを開いた
 状態でエディタを起動し、解答の提出までこなします。
 
-<video src="VIDEO_URL_JA" controls width="720"></video>
+<video src="https://github.com/user-attachments/assets/77573287-fc15-4e2a-8333-16c9766f53d3" controls width="720"></video>
 
 ## acr を使う理由
 

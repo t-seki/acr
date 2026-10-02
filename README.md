@@ -11,7 +11,7 @@ AtCoder competitive programming CLI tool for Rust. One command sets up the
 Cargo workspace, fetches sample inputs, drops you in your editor with the
 problem page already open, and ships your solution.
 
-<video src="VIDEO_URL_EN" controls width="720"></video>
+<video src="https://github.com/user-attachments/assets/549a6f81-e917-419a-ba82-2ba6d940803c" controls width="720"></video>
 
 ## Why acr?
 
