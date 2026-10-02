@@ -11,28 +11,7 @@ AtCoder competitive programming CLI tool for Rust. One command sets up the
 Cargo workspace, fetches sample inputs, drops you in your editor with the
 problem page already open, and ships your solution.
 
-<!--
-Demo media (maintainer step — fill in after recording):
-
-1) Full-desktop screencast (preferred, 30-60s)
-   - Record editor + browser + terminal in one take.
-   - macOS:   QuickTime Player / Kap
-   - Linux:   peek / kazam / OBS
-   - Windows: Xbox Game Bar / ShareX
-   - Save as MP4 or WebM; drag into a GitHub issue/PR comment to upload.
-     GitHub returns a `https://user-images.githubusercontent.com/.../*.mp4`
-     URL. Paste it into the <video> src below and uncomment the tag.
-
-2) Optional still shot (editor + browser side-by-side) under docs/ so
-   viewers with video autoplay disabled still see something.
-
-3) Optional asciinema cast for terminal-only moments (see the Usage
-   section).
--->
-
-<!-- Uncomment and fill in once recorded:
-<video src="REPLACE_ME.mp4" autoplay muted loop playsinline width="720"></video>
--->
+<video src="https://github.com/user-attachments/assets/549a6f81-e917-419a-ba82-2ba6d940803c" controls width="720"></video>
 
 ## Why acr?
 
