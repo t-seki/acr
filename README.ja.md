@@ -11,28 +11,7 @@ Rust 向け AtCoder 競技プログラミング CLI ツール。コマンド一�
 ワークスペースのセットアップとサンプル入力の取得を行い、問題ページを開いた
 状態でエディタを起動し、解答の提出までこなします。
 
-<!--
-Demo media (maintainer step — fill in after recording):
-
-1) Full-desktop screencast (preferred, 30-60s)
-   - Record editor + browser + terminal in one take.
-   - macOS:   QuickTime Player / Kap
-   - Linux:   peek / kazam / OBS
-   - Windows: Xbox Game Bar / ShareX
-   - Save as MP4 or WebM; drag into a GitHub issue/PR comment to upload.
-     GitHub returns a `https://user-images.githubusercontent.com/.../*.mp4`
-     URL. Paste it into the <video> src below and uncomment the tag.
-
-2) Optional still shot (editor + browser side-by-side) under docs/ so
-   viewers with video autoplay disabled still see something.
-
-3) Optional asciinema cast for terminal-only moments (see the Usage
-   section).
--->
-
-<!-- Uncomment and fill in once recorded:
-<video src="REPLACE_ME.mp4" autoplay muted loop playsinline width="720"></video>
--->
+<video src="VIDEO_URL_JA" controls width="720"></video>
 
 ## acr を使う理由
 
