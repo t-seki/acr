@@ -302,6 +302,8 @@ Releases are automated with [release-please](https://github.com/googleapis/relea
 
 One-time setup on crates.io is required before the first automated publish: visit the `acr-cli` crate settings on crates.io and register the GitHub repo `t-seki/acr` with workflow filename `publish.yml` as a trusted publisher.
 
+For the `/supervise` workflow used on this repo, see [docs/development.md](docs/development.md).
+
 ## License
 
 MIT
