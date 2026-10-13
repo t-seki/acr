@@ -18,7 +18,7 @@
 
 - `.release-please-manifest.json`: release-please の Release PR が必ず触る。Release PR のマージでタグが打たれ、crates.io への publish（`.github/workflows/publish.yml`）と GitHub Release / cargo-dist のビルド（`release.yml`）が走る。publish は取り消せない
 - `release-please-config.json`、`dist-workspace.toml`: リリースの仕組みの設定
-- `.github/workflows/`: `publish.yml` はタグの push でしか動かず PR の段階では検査されない。また workflow を触る PR のマージには gh のトークンの `workflow` スコープが要ることがある
+- `.github/workflows/`: `publish.yml` はタグの push と手動実行（`workflow_dispatch`）でしか動かず、PR の段階では検査されない。また workflow を触る PR のマージには gh のトークンの `workflow` スコープが要ることがある。Renovate の github-actions の更新 PR（action の digest を更新して workflow を触る）も承認制になるが、意図どおり
 
 ```auto-merge
 .release-please-manifest.json
@@ -33,6 +33,6 @@ dist-workspace.toml
 
 ### 大きさの基準
 
-`38 行・2000 バイト（9dc2ce3）`
+`38 行・2185 バイト（9dc2ce3）`
 
 この development.md の大きさの基準（測り方と値の形は [REPO-SECTION.md の「大きさの基準」](https://github.com/t-seki/dotfiles/blob/main/claude/.claude/skills/supervise/REPO-SECTION.md#大きさの基準)）。
