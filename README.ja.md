@@ -308,6 +308,8 @@ toolchain にはまだ存在しない API が候補に現れることがあり�
 
 初回の自動 publish の前に crates.io 側での一度きりのセットアップが必要です: crates.io の `acr-cli` クレート設定で、GitHub リポジトリ `t-seki/acr` とワークフローファイル名 `publish.yml` を trusted publisher として登録してください。
 
+この repo で使う `/supervise` の手順は [docs/development.md](docs/development.md) を参照してください。
+
 ## ライセンス
 
 MIT
