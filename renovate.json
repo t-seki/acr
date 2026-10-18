@@ -42,6 +42,13 @@
       "matchPackageNames": ["colored", "indicatif"]
     },
     {
+      "description": "ci.yml の msrv job の toolchain は Cargo.toml の rust-version と同じ値に固定する。Renovate の actions manager は dtolnay/rust-toolchain の with.toolchain を rust の版(depType uses-with)として更新してしまう。action の digest(depType action)は別の dep なので止まらない",
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["uses-with"],
+      "matchPackageNames": ["rust"],
+      "enabled": false
+    },
+    {
       "description": "GitHub Actions",
       "groupName": "github-actions",
       "matchManagers": ["github-actions"]
