@@ -79,3 +79,14 @@ jobs:
           # `check` subcommand: it is a top-level cargo-deny option, and the
           # action expands `arguments` before `command`.
           arguments: "--locked"
+
+  renovate-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # Runs on every PR rather than behind a `paths` filter: ci.yml has no
+      # workflow-level `paths`, and the job takes seconds. The validator version
+      # is pinned here and bumped by hand -- Renovate does not read versions out
+      # of a `run:` line. Nothing ties it to the Renovate that actually runs, so
+      # a newer Renovate may accept options this version rejects, or the reverse.
+      - run: npx --yes --package renovate@44.167.5 -- renovate-config-validator renovate.json
