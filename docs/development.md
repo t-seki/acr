@@ -10,7 +10,7 @@
 
 ### マージ前の検証
 
-なし。CI（`.github/workflows/ci.yml` の fmt・clippy・3 OS の test・msrv・cargo-deny）で足りる。
+なし。CI（`.github/workflows/ci.yml` の fmt・clippy・3 OS の test・msrv・cargo-deny・renovate-config）で足りる。
 
 ### マージの承認
 
