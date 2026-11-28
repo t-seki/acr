@@ -3,6 +3,7 @@ all-features = false
 
 [advisories]
 version = 2
+ignore = [{ id = "RUSTSEC-2026-0543", reason = "chrono is unmaintained and has no safe upgrade; migrating to another crate is tracked in a separate issue" }]
 
 [licenses]
 version = 2
