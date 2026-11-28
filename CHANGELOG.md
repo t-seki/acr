@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.2](https://github.com/t-seki/acr/compare/v0.7.1...v0.7.2) (2026-11-28)
+
+
+### Bug Fixes
+
+* **ci:** msrv job の toolchain を 1.88 に戻し、Renovate が上げないようにする ([#179](https://github.com/t-seki/acr/issues/179)) ([cb44daa](https://github.com/t-seki/acr/commit/cb44daa88bb1142f8ad55deac33a67d39440c876))
+* **deps:** cargo-deny の advisories が通るように依存を更新する ([#190](https://github.com/t-seki/acr/issues/190)) ([3227eb8](https://github.com/t-seki/acr/commit/3227eb85bdae42affb6ba8fd672aa2bb1bae048a))
+
 ## [0.7.1](https://github.com/t-seki/acr/compare/v0.7.0...v0.7.1) (2026-09-22)
 
 
